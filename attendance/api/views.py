@@ -4,11 +4,19 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import ValidationError
+from rest_framework.decorators import action
+
+from django.db import DatabaseError
 from django.core.exceptions import ObjectDoesNotExist
-from .utils import success_response, error_response, validation_error_response
+
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+
+
+from .utils import success_response, error_response, validation_error_response
+
+
 
 from ..models import Employee, Device, AttendanceLog, Shift, Schedule, WorkHours
 from .serializers import (
@@ -27,20 +35,6 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
 
-    # def get_permissions(self):
-    #     """
-    #     Instantiates and returns the list of permissions that this view requires.
-    #     """
-    #     if self.request.method in ['GET']:
-    #         # No authentication needed for GET requests
-    #         permission_classes = [AllowAny]
-    #         self.authentication_classes = []  # Remove JWT authentication for GET requests
-    #     else:
-    #         # Authentication required for other requests
-    #         permission_classes = [IsAuthenticated, AttendanceHasDynamicModelPermission]
-    #         self.authentication_classes = [JWTAuthentication]  # JWT required for other methods
-
-    #     return [permission() for permission in permission_classes]
     @swagger_auto_schema(
         operation_summary="List Employees",
         operation_description="Retrieve a list of employees belonging to the user's company.",
@@ -257,31 +251,295 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             return error_response("Server error while deleting employee.", str(e), error_type="ServerError", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# ViewSet for Device
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_summary="List Devices",
+        operation_description="Retrieve a list of devices belonging to the user's company.",
+        responses={
+            200: openapi.Response(
+                description="A list of devices",
+                schema=DeviceSerializer(many=True)
+            ),
+            403: openapi.Response(
+                description="Permission denied"
+            )
+        },
+        tags=["Devices"]
+    )
+    def list(self, request, *args, **kwargs):
+        """Return an array of device objects belonging to the request user's company."""
+        try:
+            # Filter the queryset to get only devices of the user's company
+            queryset = self.get_queryset().filter(company=request.user.company)
+
+            if queryset.exists():
+                serializer = self.get_serializer(queryset, many=True)
+                return success_response("Device list retrieved successfully.", serializer.data)
+            else:
+                return success_response("No devices found.", [])
+        except DatabaseError as e:
+            return error_response("Database error occurred.", str(e), error_type="ServerError", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve Device",
+        operation_description="Retrieve details of a single device belonging to the user's company.",
+        responses={
+            200: openapi.Response(
+                description="Device details retrieved successfully",
+                schema=DeviceSerializer()
+            ),
+            404: openapi.Response(description="Device not found"),
+            403: openapi.Response(description="Permission denied")
+        },
+        tags=["Devices"]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a single device object that belongs to the request user's company.
+        Ensures the user has the appropriate permission to access the device.
+        """
+        try:
+            # Get the device instance using the primary key
+            instance = self.get_object()
+
+            # Check if the device belongs to the same company as the user
+            if instance.company.id != request.user.company.id:
+                return error_response(
+                    "You do not have permission to access this device.",
+                    error_type="PermissionDenied",
+                    status_code=status.HTTP_403_FORBIDDEN
+                )
+
+            # Serialize the device data if the company check passes
+            serializer = self.get_serializer(instance)
+            return success_response(
+                f"Device {instance.device_id} details retrieved successfully.",
+                serializer.data
+            )
+
+        except NotFound:
+            # Handle case where device is not found
+            return error_response(
+                "Device not found.",
+                error_type="NotFoundError",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        except DatabaseError as e:
+            # Handle any database-related errors
+            return error_response(
+                "A database error occurred while retrieving the device.",
+                str(e),
+                error_type="ServerError",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+    @swagger_auto_schema(
+        operation_summary="Create Device",
+        operation_description="Create a new device for the logged-in user and return the created device object.",
+        request_body=DeviceSerializer,
+        responses={
+            201: openapi.Response(
+                description="Device created successfully",
+                schema=DeviceSerializer()
+            ),
+            400: openapi.Response(
+                description="Validation error occurred."
+            ),
+        },
+        tags=["Devices"]
+    )
+    def create(self, request, *args, **kwargs):
+        """Create a new device and return the created object."""
+        serializer = self.get_serializer(data=request.data)
+        try:
+            if serializer.is_valid(raise_exception=True):
+                self.perform_create(serializer)
+                return success_response("Device created successfully.", serializer.data, status_code=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return validation_error_response(e.detail)
+        except DatabaseError as e:
+            return error_response("Server error while creating device.", str(e), error_type="ServerError", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Update Device",
+        operation_description="Update an existing device's details. This is a full update (PUT).",
+        request_body=DeviceSerializer,
+        responses={
+            200: openapi.Response(
+                description="Device updated successfully",
+                schema=DeviceSerializer()
+            ),
+            400: openapi.Response(description="Validation error"),
+            403: openapi.Response(description="Permission denied"),
+            404: openapi.Response(description="Device not found")
+        },
+        tags=["Devices"]
+    )
+    def update(self, request, *args, **kwargs):
+        """Update a device object based on user group and company (PUT)."""
+        instance = self.get_object()
+
+        # Ensure the user and device are in the same company
+        if instance.company.id != request.user.company.id:
+            return error_response("You do not belong to the same company.", 
+                                  error_type="PermissionDenied", 
+                                  status_code=status.HTTP_403_FORBIDDEN)
+
+        # Allow full update regardless of user group
+        serializer = self.get_serializer(instance, data=request.data)
+
+        try:
+            if serializer.is_valid(raise_exception=True):
+                self.perform_update(serializer)
+                return success_response("Device updated successfully.", serializer.data)
+
+        except ValidationError as e:
+            return validation_error_response(e.detail)
+        except NotFound:
+            return error_response("Device not found.", error_type="NotFoundError", status_code=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return error_response("Server error while updating device.", str(e), error_type="ServerError", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Partial Update Device",
+        operation_description="Partially update an existing device's details. This is a partial update (PATCH).",
+        request_body=DeviceSerializer,
+        responses={
+            200: openapi.Response(
+                description="Device partially updated successfully",
+                schema=DeviceSerializer()
+            ),
+            400: openapi.Response(description="Validation error"),
+            403: openapi.Response(description="Permission denied"),
+            404: openapi.Response(description="Device not found")
+        },
+        tags=["Devices"]
+    )
+    def partial_update(self, request, *args, **kwargs):
+        """Partially update a device object based on user group and company (PATCH)."""
+        instance = self.get_object()
+
+        # Ensure the user and device are in the same company
+        if instance.company.id != request.user.company.id:
+            return error_response("You do not belong to the same company.", 
+                                  error_type="PermissionDenied", 
+                                  status_code=status.HTTP_403_FORBIDDEN)
+
+        # Check user group and apply allowed fields
+        allowed_fields = ['location', 'description', 'ip_address', 'last_sync_time']
+        data = {key: value for key, value in request.data.items() if key in allowed_fields}
+
+        if not data:
+            return error_response("No valid fields to update.", 
+                                  error_type="ValidationError", 
+                                  status_code=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(instance, data=data, partial=True)
+
+        try:
+            if serializer.is_valid(raise_exception=True):
+                self.perform_update(serializer)
+                return success_response("Device partially updated successfully.", serializer.data)
+
+        except ValidationError as e:
+            return validation_error_response(e.detail)
+        except NotFound:
+            return error_response("Device not found.", error_type="NotFoundError", status_code=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return error_response("Server error while partially updating device.", str(e), error_type="ServerError", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Delete Device",
+        operation_description="Delete a device.",
+        responses={
+            204: openapi.Response(description="Device deleted successfully"),
+            404: openapi.Response(description="Device not found"),
+            403: openapi.Response(description="Permission denied")
+        },
+        tags=["Devices"]
+    )
+    def destroy(self, request, *args, **kwargs):
+        """Delete a device and return a success message."""
+        try:
+            instance = self.get_object()
+
+            # Check if the request user's company matches the instance's company
+            if instance.company.id != request.user.company.id:
+                return error_response("You do not belong to the same company.", 
+                                    error_type="PermissionDenied", 
+                                    status_code=status.HTTP_403_FORBIDDEN)
+
+            # Perform the delete operation
+            self.perform_destroy(instance)
+            return success_response(f"Device {instance.device_id} deleted successfully.")
+        except NotFound:
+            return error_response("Device not found.", error_type="NotFoundError", status_code=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return error_response("Server error while deleting device.", str(e), error_type="ServerError", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ViewSet for AttendanceLog
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from django.db import DatabaseError
+from django.core.exceptions import ObjectDoesNotExist
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 class AttendanceLogViewSet(viewsets.ModelViewSet):
-    serializer_class = AttendanceLogSerializer
     queryset = AttendanceLog.objects.all()
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    serializer_class = AttendanceLogSerializer
 
-    def get_queryset(self):
-        """
-        Filter attendance logs by the logged-in user's company.
-        """
-        user = self.request.user
-        return AttendanceLog.objects.filter(company=user.company)
+    @swagger_auto_schema(
+        operation_summary="List Attendance Logs",
+        operation_description="Retrieve a list of attendance logs for the user's company.",
+        responses={
+            200: openapi.Response(
+                description="A list of attendance logs",
+                schema=AttendanceLogSerializer(many=True)
+            ),
+            403: openapi.Response(
+                description="Permission denied"
+            )
+        },
+        tags=["Attendance Logs"]
+    )
+    def list(self, request, *args, **kwargs):
+        """Return a list of attendance logs for the user's company."""
+        try:
+            # Filter to get attendance logs belonging to the user's company
+            queryset = self.get_queryset().filter(company=request.user.company)
 
+            if queryset.exists():
+                serializer = self.get_serializer(queryset, many=True)
+                return Response({"detail": "Attendance logs retrieved successfully.", "data": serializer.data}, status=status.HTTP_200_OK)
+            else:
+                return Response({"detail": "No attendance logs found."}, status=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return Response({"detail": "Database error occurred.", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Create Attendance Log",
+        operation_description="Create a new attendance log.",
+        request_body=AttendanceLogSerializer,
+        responses={
+            201: openapi.Response(
+                description="Attendance log created successfully",
+                schema=AttendanceLogSerializer()
+            ),
+            400: openapi.Response(description="Validation error"),
+            403: openapi.Response(description="Permission denied"),
+        },
+        tags=["Attendance Logs"]
+    )
     def create(self, request, *args, **kwargs):
-        """
-        Custom create function for attendance log.
-        Checks if the user's company and user are active.
-        """
+        """Custom create function for attendance log."""
         user = request.user
         
         if not user.company.is_active or not user.is_active:
@@ -292,15 +550,180 @@ class AttendanceLogViewSet(viewsets.ModelViewSet):
 
         data = request.data
         serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response({"detail": "Attendance log created successfully.", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return Response({"detail": "Validation error.", "error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            return Response({"detail": "Server error while creating attendance log.", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        """
-        Save the user and their company when creating attendance log.
-        """
-        serializer.save(user=self.request.user, company=self.request.user.company)
+        """Save the user and their company when creating attendance log."""
+        serializer.save()
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve Attendance Log",
+        operation_description="Retrieve a specific attendance log.",
+        responses={
+            200: openapi.Response(
+                description="Attendance log details retrieved successfully",
+                schema=AttendanceLogSerializer()
+            ),
+            404: openapi.Response(description="Attendance log not found"),
+            403: openapi.Response(description="Permission denied"),
+        },
+        tags=["Attendance Logs"]
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """Return a single attendance log object."""
+        try:
+            instance = self.get_object()
+            if instance.company.id != request.user.company.id:
+                return Response({"detail": "You do not have permission to access this attendance log."}, status=status.HTTP_403_FORBIDDEN)
+
+            serializer = self.get_serializer(instance)
+            return Response({"detail": "Attendance log retrieved successfully.", "data": serializer.data}, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({"detail": "Attendance log not found."}, status=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return Response({"detail": "Database error occurred.", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve Attendance Logs by Employee ID",
+        operation_description="Retrieve attendance logs for a specific employee by their ID.",
+        manual_parameters=[
+            openapi.Parameter(
+                'employee_id',
+                openapi.IN_QUERY,
+                description="ID of the employee whose attendance logs you want to retrieve.",
+                type=openapi.TYPE_INTEGER,
+                required=True
+            ),
+        ],
+        responses={
+            200: openapi.Response(
+                description="Attendance logs retrieved successfully",
+                schema=AttendanceLogSerializer(many=True)
+            ),
+            400: openapi.Response(description="employee_id parameter is required."),
+            404: openapi.Response(description="Employee not found or does not belong to your company."),
+            403: openapi.Response(description="Permission denied"),
+        },
+        tags=["Attendance Logs"]
+    )
+    @action(detail=False, methods=['get'], url_path='logs-by-employee')
+    def get_logs_by_employee(self, request, *args, **kwargs):
+        employee_id = request.query_params.get('employee_id')
+        
+        if not employee_id:
+            return Response({"error": "employee_id parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Filter logs by the employee_id
+            logs = AttendanceLog.objects.filter(employee_id=employee_id)  # Use a valid field
+            serializer = AttendanceLogSerializer(logs, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except AttendanceLog.DoesNotExist:
+            return Response({"error": "No logs found for this employee."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    @swagger_auto_schema(
+        operation_summary="Update Attendance Log",
+        operation_description="Update an existing attendance log.",
+        request_body=AttendanceLogSerializer,
+        responses={
+            200: openapi.Response(
+                description="Attendance log updated successfully",
+                schema=AttendanceLogSerializer()
+            ),
+            400: openapi.Response(description="Validation error"),
+            403: openapi.Response(description="Permission denied"),
+            404: openapi.Response(description="Attendance log not found"),
+        },
+        tags=["Attendance Logs"]
+    )
+    def update(self, request, *args, **kwargs):
+        """Update an existing attendance log."""
+        instance = self.get_object()
+
+        if instance.company.id != request.user.company.id:
+            return Response({"detail": "You do not have permission to update this attendance log."}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        serializer = self.get_serializer(instance, data=data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response({"detail": "Attendance log updated successfully.", "data": serializer.data}, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({"detail": "Validation error.", "error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist:
+            return Response({"detail": "Attendance log not found."}, status=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return Response({"detail": "Server error while updating attendance log.", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Partial Update Attendance Log",
+        operation_description="Partially update an existing attendance log.",
+        request_body=AttendanceLogSerializer,
+        responses={
+            200: openapi.Response(
+                description="Attendance log partially updated successfully",
+                schema=AttendanceLogSerializer()
+            ),
+            400: openapi.Response(description="Validation error"),
+            403: openapi.Response(description="Permission denied"),
+            404: openapi.Response(description="Attendance log not found"),
+        },
+        tags=["Attendance Logs"]
+    )
+    def partial_update(self, request, *args, **kwargs):
+        """Partially update an attendance log."""
+        instance = self.get_object()
+
+        if instance.company.id != request.user.company.id:
+            return Response({"detail": "You do not have permission to partially update this attendance log."}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        serializer = self.get_serializer(instance, data=data, partial=True)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response({"detail": "Attendance log partially updated successfully.", "data": serializer.data}, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({"detail": "Validation error.", "error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except ObjectDoesNotExist:
+            return Response({"detail": "Attendance log not found."}, status=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return Response({"detail": "Server error while partially updating attendance log.", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @swagger_auto_schema(
+        operation_summary="Delete Attendance Log",
+        operation_description="Delete an existing attendance log.",
+        responses={
+            204: openapi.Response(description="Attendance log deleted successfully"),
+            403: openapi.Response(description="Permission denied"),
+            404: openapi.Response(description="Attendance log not found"),
+        },
+        tags=["Attendance Logs"]
+    )
+    def destroy(self, request, *args, **kwargs):
+        """Delete an attendance log."""
+        instance = self.get_object()
+
+        if instance.company.id != request.user.company.id:
+            return Response({"detail": "You do not have permission to delete this attendance log."}, status=status.HTTP_403_FORBIDDEN)
+
+        self.perform_destroy(instance)
+        return Response({"detail": "Attendance log deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+
+
 
 # ViewSet for Shift
 class ShiftViewSet(viewsets.ModelViewSet):

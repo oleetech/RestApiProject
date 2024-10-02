@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -180,8 +181,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+# Add this line
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# You might also want to ensure you have these settings
+STATIC_URL = '/static/'
+
+# Additional settings for static files if necessary
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # where your static files are during development
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

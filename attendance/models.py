@@ -1,8 +1,8 @@
 from django.db import models
 from django.conf import settings
 from authentication.models import CustomUser, Company  # Correctly import the Company model
+from datetime import timedelta
 from django.utils import timezone
-
 
 class Employee(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employees')  # Link to Django's User model
@@ -48,9 +48,45 @@ class Device(models.Model):
     description = models.TextField(null=True, blank=True)  # Device description
     ip_address = models.GenericIPAddressField(null=True, blank=True)  # Device IP Address
     last_sync_time = models.DateTimeField(null=True, blank=True)  # Last time the device was synced
+    serial_number = models.CharField(max_length=255, unique=True,null=True)  # Unique serial number of the device
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True)  # Link to the company
+
+    class Meta:
+        verbose_name = "Device"
+        verbose_name_plural = "Devices"
+        ordering = ['-last_sync_time']  # Order devices by last sync time (latest first)
 
     def __str__(self):
+        """
+        Return a string representation of the device showing its ID and location.
+        """
         return f"{self.device_id} - {self.location}"
+
+    def clean(self):
+        """
+        Custom validation logic to ensure the device has a valid serial number format.
+        """
+        if len(self.serial_number) < 10:
+            raise ValidationError("Serial number must be at least 10 characters long.")
+        if not self.ip_address:
+            raise ValidationError("Device must have a valid IP address.")
+
+    @property
+    def is_synced(self):
+        """
+        Check if the device has been synced in the last 24 hours.
+        """
+
+
+        if self.last_sync_time:
+            return timezone.now() - self.last_sync_time < timedelta(days=1)
+        return False
+
+    def get_device_summary(self):
+        """
+        Return a summary of the device, including ID, location, and company.
+        """
+        return f"Device {self.device_id} located at {self.location}, owned by {self.company.name}."
 
 
 
@@ -60,6 +96,7 @@ class AttendanceLog(models.Model):
     """
     ব্যবহারকারীর চেক ইন এবং চেক আউট তথ্য সংরক্ষণ করার জন্য উপস্থিতি লগ মডেল।
     """
+    
     employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attendance_logs')
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='attendance_logs')
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
@@ -85,9 +122,34 @@ class AttendanceLog(models.Model):
         return f"{self.employee.username} - {self.timestamp} - {self.status}"
 
     class Meta:
+        verbose_name = "Attendance Log"
+        verbose_name_plural = "Attendance Logs"
+        ordering = ['-timestamp']  # Order by latest timestamp first
         constraints = [
             models.UniqueConstraint(fields=['employee', 'timestamp'], name='unique_attendance_log_per_user_per_day_per_checkin')
         ]
+
+    def clean(self):
+        """
+        Custom validation to ensure attendance log has valid latitude and longitude if provided.
+        """
+        if (self.latitude is not None) != (self.longitude is not None):
+            raise ValidationError("Both latitude and longitude must be provided together.")
+
+    @property
+    def is_recent(self):
+        """
+        Check if the attendance log was created within the last 24 hours.
+        """
+        return timezone.now() - self.timestamp < timedelta(days=1)
+
+    def get_attendance_summary(self):
+        """
+        Return a summary of the attendance log, including employee name, status, and location.
+        """
+        location = self.locationName if self.locationName else 'Unknown Location'
+        return f"Attendance Log: {self.employee.username} {self.status} at {location} on {self.timestamp}."
+
 
 
 class Shift(models.Model):

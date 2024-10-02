@@ -17,9 +17,27 @@ class DeviceAdmin(admin.ModelAdmin):
     """
     Admin interface for Device model.
     """
-    list_display = ('id', 'device_id', 'location', 'description', 'ip_address', 'last_sync_time')
-    search_fields = ('device_id', 'location', 'ip_address')
-    list_filter = ('location', 'last_sync_time')
+    list_display = ('id', 'device_id', 'location', 'company', 'ip_address', 'last_sync_time', 'is_synced')  # Added 'company' and 'is_synced'
+    search_fields = ('device_id', 'location', 'ip_address', 'company__name')  # Added search by company name
+    list_filter = ('location', 'company', 'last_sync_time')  # Added filter by 'company'
+    ordering = ('-last_sync_time',)  # Devices ordered by latest sync time
+    list_editable = ('location', 'ip_address')  # Allow inline editing of location and IP address
+    readonly_fields = ('last_sync_time',)  # Prevent editing of sync time
+
+    def is_synced(self, obj):
+        """
+        Show whether the device has been synced within the last 24 hours.
+        """
+        return obj.is_synced
+    is_synced.boolean = True  # Display as a boolean icon in the list display
+    is_synced.short_description = 'Synced Recently'
+
+    def save_model(self, request, obj, form, change):
+        """
+        Custom logic when saving a device through the admin interface.
+        """
+        # Add any additional custom actions when saving the device
+        super().save_model(request, obj, form, change)
 
 # Registering AttendanceLog model in the admin
 @admin.register(AttendanceLog)

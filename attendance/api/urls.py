@@ -16,6 +16,7 @@ router = DefaultRouter()
 router.register(r'employees', EmployeeViewSet)
 router.register(r'devices', DeviceViewSet)
 router.register(r'attendance-logs', AttendanceLogViewSet)
+
 router.register(r'shifts', ShiftViewSet)
 router.register(r'schedules', ScheduleViewSet)
 router.register(r'work-hours', WorkHoursViewSet)
@@ -23,4 +24,5 @@ router.register(r'work-hours', WorkHoursViewSet)
 # Include all the router URLs
 urlpatterns = [
     path('', include(router.urls)),
+
 ]

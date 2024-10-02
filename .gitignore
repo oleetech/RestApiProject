@@ -1,0 +1,24 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Django migrations
+*/migrations/*.py
+*/migrations/__init__.py
+
+# Local settings
+local_settings.py
+
+# Environment variables
+.env
+
+# VS Code settings
+.vscode/
+
+# IDE settings
+.idea/
+
+# Python virtual environments
+venv/
+ENV/
+env/

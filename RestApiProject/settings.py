@@ -72,6 +72,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT টোকেন ব্যবহৃত হবে
         'rest_framework.authentication.SessionAuthentication',  # সেশন ব্যবহৃত হবে
     ),
+
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/day',  # Limit authenticated users to 100 requests per day
+        'anon': '10/hour',  # Limit unauthenticated users to 10 requests per hour
+    }
 }
 
 # JWT Token-এর সময়সীমা নির্ধারণ

@@ -7,6 +7,20 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated,AttendanceHasDynamicModelPermission]
+    throttle_classes = [UserRateThrottle]
+
+    @method_decorator(csrf_exempt)  # Disabling CSRF protection
+    def dispatch(self, *args, **kwargs):
+        # Add custom checks or logging here
+        print(f"Request Method: {self.request.method} | Request Path: {self.request.path}")
+        
+        response = super().dispatch(*args, **kwargs)
+
+        # Applying CSRF protection
+        CsrfViewMiddleware().process_view(self.request, None, (), {})
+
+        return response
+
     @swagger_auto_schema(
         operation_summary="List Employees",
         operation_description="Retrieve a list of employees belonging to the user's company.",

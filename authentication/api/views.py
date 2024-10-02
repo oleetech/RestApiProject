@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+from django.middleware.csrf import CsrfViewMiddleware
+
 from .serializers import RegisterSerializer
 
 # Register View
@@ -49,6 +52,7 @@ class LoginView(APIView):
     Custom login view to authenticate the user and return JWT tokens securely.
     """
     permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]  # Apply throttling
 
     def post(self, request):
         email = request.data.get('email')

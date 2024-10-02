@@ -56,9 +56,62 @@ class ShiftAdmin(admin.ModelAdmin):
     """
     Admin interface for Shift model.
     """
-    list_display = ('id', 'name', 'start_time', 'end_time', 'break_duration')
-    search_fields = ('name',)
-    list_filter = ('start_time', 'end_time')
+
+    # Fields to display in the list view
+    list_display = ('id', 'name', 'company', 'start_time', 'end_time', 'break_duration', 'status', 'duration_display')
+    
+    # Fields to search
+    search_fields = ('name', 'company__name')  # Allows searching by company name
+
+    # Fields to filter by
+    list_filter = ('status', 'start_time', 'end_time', 'company')  # Added filtering by company and status
+
+    # Read-only fields
+    readonly_fields = ('duration_display',)
+
+    def duration_display(self, obj):
+        """
+        Display the duration of the shift in the admin panel.
+        """
+        return str(obj.duration)  # Convert duration to string for display
+
+    duration_display.short_description = 'Duration'  # Column title in admin
+
+    # Optional: Customize the form layout
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'company', 'start_time', 'end_time', 'break_duration', 'status'),
+        }),
+        ('Advanced', {
+            'fields': ('duration_display',),  # Show duration as read-only in a separate section
+        }),
+    )
+
+    # Optionally, you can define how many entries are displayed per page
+    list_per_page = 20  # Adjust this number as needed
+
+    # Optional: Add actions
+    actions = ['mark_active', 'mark_inactive']
+
+    def mark_active(self, request, queryset):
+        """
+        Custom action to mark selected shifts as active.
+        """
+        queryset.update(status='ACTIVE')
+        self.message_user(request, "Selected shifts marked as active.")
+
+    mark_active.short_description = "Mark selected shifts as active"
+
+    def mark_inactive(self, request, queryset):
+        """
+        Custom action to mark selected shifts as inactive.
+        """
+        queryset.update(status='INACTIVE')
+        self.message_user(request, "Selected shifts marked as inactive.")
+
+    mark_inactive.short_description = "Mark selected shifts as inactive"
+
+    
 
 # Registering Schedule model in the admin
 @admin.register(Schedule)

@@ -148,17 +148,38 @@ class AttendanceLogSerializer(serializers.ModelSerializer):
 class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
-        fields = ['id', 'name', 'start_time', 'end_time', 'break_duration']
+        fields = ['id', 'name', 'start_time', 'end_time', 'break_duration', 'company', 'status']  # Added necessary fields
 
+    # Custom validation for the company field
+    def validate_company(self, value):
+        """
+        Ensure the company is active.
+        """
+        if value and not value.is_active:
+            raise serializers.ValidationError("The company must be active.")
+        return value
+
+    # Custom validation for start and end time
     def validate(self, data):
         """
-        Validate that end time is after start time.
+        Ensure start time is before end time.
         """
-        if data['end_time'] <= data['start_time']:
-            raise serializers.ValidationError("End time must be after start time.")
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        if start_time >= end_time:
+            raise serializers.ValidationError("Start time must be before end time.")
+
         return data
 
-
+    # Custom validation for break duration
+    def validate_break_duration(self, value):
+        """
+        Ensure break duration is not negative.
+        """
+        if value and value.total_seconds() < 0:
+            raise serializers.ValidationError("Break duration cannot be negative.")
+        return value
 # Serializer for Schedule model
 class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:

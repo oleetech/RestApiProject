@@ -98,7 +98,7 @@ class AttendanceLog(models.Model):
     """
     
     employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attendance_logs')
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='attendance_logs')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='attendance_logs',null=True)
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
     timestamp = models.DateTimeField(default=timezone.now)
    
@@ -153,13 +153,58 @@ class AttendanceLog(models.Model):
 
 
 class Shift(models.Model):
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Active'),
+        ('INACTIVE', 'Inactive'),
+    ]    
     name = models.CharField(max_length=50)  # Name of the shift
     start_time = models.TimeField()  # Shift start time
     end_time = models.TimeField()  # Shift end time
     break_duration = models.DurationField(null=True, blank=True)  # Optional break duration
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='shifts',null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')  # Shift status
+    class Meta:
+        verbose_name = "Shift"
+        verbose_name_plural = "Shifts"
+        ordering = ['start_time']  # Order shifts by start time
+        constraints = [
+            models.UniqueConstraint(fields=['company', 'name'], name='unique_shift_per_company')  # Unique constraint
+        ]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.company.name}) - Status: {self.status}"  # Return shift details
+
+    @property
+    def duration(self):
+        """
+        Calculate the duration of the shift considering break time.
+        If start_time or end_time is None, return None.
+        """
+        # Check if both start_time and end_time are not None
+        if self.start_time and self.end_time:
+            shift_start = timezone.datetime.combine(timezone.now().date(), self.start_time)
+            shift_end = timezone.datetime.combine(timezone.now().date(), self.end_time)
+            shift_duration = shift_end - shift_start
+
+            if self.break_duration:
+                shift_duration -= self.break_duration  # Subtract break duration
+
+            return shift_duration
+
+        return None  # Return None if start_time or end_time is None
+
+    def clean(self):
+        """
+        Custom validation to ensure that the end time is after the start time.
+        """
+        if self.end_time <= self.start_time:
+            raise ValidationError("End time must be after start time.")
+
+    def is_active(self):
+        """
+        Check if the shift is currently active based on the status.
+        """
+        return self.status == 'ACTIVE'
 
 
 class Schedule(models.Model):

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import  Employee, Device, AttendanceLog, Shift, Schedule, WorkHours
 from datetime import datetime
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 import ipaddress
 # Serializer for Employee model
@@ -16,7 +17,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         Ensure employee ID is unique and meets specific format requirements.
         """
         if not value.isalnum():
-            raise serializers.ValidationError("Employee ID must be alphanumeric.")
+            raise serializers.ValidationError(_("Employee ID must be alphanumeric."))  # Translatable error
         return value
 
     # Custom validation for contact number
@@ -25,15 +26,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
         Validate that contact number has 10-15 digits.
         """
         if len(value) < 10 or len(value) > 15:
-            raise serializers.ValidationError("Contact number must be between 10 and 15 digits.")
+            raise serializers.ValidationError(_("Contact number must be between 10 and 15 digits."))  # Translatable error
         if not value.isdigit():
-            raise serializers.ValidationError("Contact number must be numeric.")
+            raise serializers.ValidationError(_("Contact number must be numeric."))  # Translatable error
         return value
 
     # Cross-field validation (e.g., department and position should be provided together)
     def validate(self, data):
         if data.get('department') and not data.get('position'):
-            raise serializers.ValidationError("Position must be provided if department is specified.")
+            raise serializers.ValidationError(_("Position must be provided if department is specified."))  # Translatable error
         return data
 
 

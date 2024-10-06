@@ -1,0 +1,283 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-05 12:07+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\attendance\api\serializers.py:20
+msgid "Employee ID must be alphanumeric."
+msgstr ""
+
+#: .\attendance\api\serializers.py:29 .\attendance\models.py:29
+msgid "Contact number must be between 10 and 15 digits."
+msgstr ""
+
+#: .\attendance\api\serializers.py:31 .\attendance\models.py:27
+msgid "Contact number must be numeric."
+msgstr ""
+
+#: .\attendance\api\serializers.py:37
+msgid "Position must be provided if department is specified."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:24
+msgid "List Attendance Logs"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:25
+msgid "Retrieve a list of attendance logs for the user's company."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:28
+msgid "A list of attendance logs"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:32
+#: .\attendance\api\views\attendance_log_views.py:61
+#: .\attendance\api\views\attendance_log_views.py:100
+#: .\attendance\api\views\attendance_log_views.py:137
+#: .\attendance\api\views\attendance_log_views.py:166
+#: .\attendance\api\views\attendance_log_views.py:202
+#: .\attendance\api\views\attendance_log_views.py:234
+msgid "Permission denied"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:35
+#: .\attendance\api\views\attendance_log_views.py:63
+#: .\attendance\api\views\attendance_log_views.py:102
+#: .\attendance\api\views\attendance_log_views.py:139
+#: .\attendance\api\views\attendance_log_views.py:169
+#: .\attendance\api\views\attendance_log_views.py:205
+#: .\attendance\api\views\attendance_log_views.py:236
+msgid "Attendance Logs"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:45
+msgid "Attendance logs retrieved successfully."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:47
+msgid "No attendance logs found."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:49
+#: .\attendance\api\views\attendance_log_views.py:116
+msgid "Database error occurred."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:52
+msgid "Create Attendance Log"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:53
+msgid "Create a new attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:57
+msgid "Attendance log created successfully"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:60
+#: .\attendance\api\views\attendance_log_views.py:165
+#: .\attendance\api\views\attendance_log_views.py:201
+msgid "Validation error"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:71
+msgid ""
+"You or your company is inactive, and attendance logs cannot be submitted."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:81
+msgid "Attendance log created successfully."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:83
+#: .\attendance\api\views\attendance_log_views.py:186
+#: .\attendance\api\views\attendance_log_views.py:222
+msgid "Validation error."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:85
+msgid "Server error while creating attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:92
+msgid "Retrieve Attendance Log"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:93
+msgid "Retrieve a specific attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:96
+msgid "উপস্থিতি লগগুলি সফলভাবে পুনরুদ্ধার করা হয়েছে৷"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:99
+#: .\attendance\api\views\attendance_log_views.py:167
+#: .\attendance\api\views\attendance_log_views.py:203
+#: .\attendance\api\views\attendance_log_views.py:233
+msgid "Attendance log not found"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:109
+msgid "You do not have permission to access this attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:112
+msgid "Attendance log retrieved successfully."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:114
+#: .\attendance\api\views\attendance_log_views.py:188
+#: .\attendance\api\views\attendance_log_views.py:224
+msgid "Attendance log not found."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:119
+msgid "Retrieve Attendance Logs by Employee ID"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:120
+msgid "Retrieve attendance logs for a specific employee by their ID."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:125
+msgid "ID of the employee whose attendance logs you want to retrieve."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:132
+msgid "Attendance logs retrieved successfully"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:135
+#: .\attendance\api\views\attendance_log_views.py:144
+msgid "employee_id parameter is required."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:136
+msgid "Employee not found or does not belong to your company."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:152
+msgid "No logs found for this employee."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:157
+msgid "Update Attendance Log"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:158
+msgid "Update an existing attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:162
+msgid "Attendance log updated successfully"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:176
+msgid "You do not have permission to update this attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:184
+msgid "Attendance log updated successfully."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:190
+msgid "Server error while updating attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:193
+msgid "Partial Update Attendance Log"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:194
+msgid "Partially update an existing attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:198
+msgid "Attendance log partially updated successfully"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:212
+msgid "You do not have permission to partially update this attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:220
+msgid "Attendance log partially updated successfully."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:226
+msgid "Server error while partially updating attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:229
+msgid "Delete Attendance Log"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:230
+msgid "Delete an attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:232
+msgid "Attendance log deleted successfully"
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:243
+msgid "You do not have permission to delete this attendance log."
+msgstr ""
+
+#: .\attendance\api\views\attendance_log_views.py:246
+msgid "Attendance log deleted successfully."
+msgstr ""
+
+#: .\attendance\models.py:9
+msgid "User"
+msgstr ""
+
+#: .\attendance\models.py:10
+msgid "Employee ID"
+msgstr ""
+
+#: .\attendance\models.py:11
+msgid "Department name"
+msgstr ""
+
+#: .\attendance\models.py:12
+msgid "Position title"
+msgstr ""
+
+#: .\attendance\models.py:13
+msgid "Contact number"
+msgstr ""
+
+#: .\attendance\models.py:14
+msgid "Date of joining"
+msgstr ""
+
+#: .\attendance\models.py:17
+msgid "Employee"
+msgstr ""
+
+#: .\attendance\models.py:18
+msgid "Employees"
+msgstr ""
+
+#: .\attendance\models.py:38
+msgid "No specific department or position assigned."
+msgstr ""

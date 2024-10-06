@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom_admin.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    {% include "includes/header.html" %}
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            {% include "includes/sidebar.html" %}
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                {% block content %}
+                <!-- Content goes here -->
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    {% include "includes/footer.html" %}
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/custom_admin.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

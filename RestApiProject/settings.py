@@ -49,6 +49,23 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'authentication.CustomUser'  # আপনার অ্যাপের নাম দিয়ে 'your_app_name' রিপ্লেস করুন 
 
+LANGUAGE_CODE = 'en-us'  # Default language
+TIME_ZONE = 'UTC'
+USE_I18N = True  # Enable internationalization (i18n)
+USE_L10N = True  # Enable localization (l10n)
+USE_TZ = True
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('bn', 'Bengali'),
+    ('hi', 'Hindi'),
+    ('zh', 'Chinese'),
+]
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),  # Global locale directory if translations are global
+    os.path.join(BASE_DIR, 'attendance', 'locale'),  # App-specific locale directory
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
@@ -59,6 +76,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+
 
 ]
 
@@ -124,7 +143,7 @@ ROOT_URLCONF = 'RestApiProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Add your templates directory here
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  
 
         'APP_DIRS': True,
         'OPTIONS': {

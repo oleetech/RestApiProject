@@ -3,8 +3,9 @@
 # Django imports
 from django.db import DatabaseError
 from django.core.exceptions import ObjectDoesNotExist
+from django.middleware.csrf import CsrfViewMiddleware  
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt,csrf_protect
 
 # DRF imports
 from rest_framework import viewsets, status

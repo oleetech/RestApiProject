@@ -3,53 +3,47 @@ from django.conf import settings
 from authentication.models import CustomUser, Company  # Correctly import the Company model
 from datetime import timedelta
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 class Employee(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employees')  # Link to Django's User model
-    employee_id = models.CharField(max_length=20, unique=True)   # Unique Employee ID
-    department = models.CharField(max_length=50, null=True, blank=True)  # Department name
-    position = models.CharField(max_length=50, null=True, blank=True)  # Position title
-    contact_number = models.CharField(max_length=15, null=True, blank=True)  # Contact Number
-    date_of_joining = models.DateField(null=True, blank=True)  # Date of joining
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employees', verbose_name=_("User"))  
+    employee_id = models.CharField(max_length=20, unique=True, verbose_name=_("Employee ID"))  
+    department = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Department name"))  
+    position = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Position title"))  
+    contact_number = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Contact number"))  
+    date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of joining"))  
 
     class Meta:
-        verbose_name = "Employee"
-        verbose_name_plural = "Employees"
-        ordering = ['date_of_joining']  # Order employees by date of joining
+        verbose_name = _("Employee")  
+        verbose_name_plural = _("Employees")  
+        ordering = ['date_of_joining']  
 
     def __str__(self):
-        return f"{self.user.username} ({self.employee_id})"  # More informative string representation
+        return f"{self.user.username} ({self.employee_id})"  
 
     def clean(self):
-        """
-        Custom validation logic can be implemented here.
-        """
+        """Custom validation logic."""
         if self.contact_number and not self.contact_number.isdigit():
-            raise ValidationError("Contact number must be numeric.")
+            raise ValidationError(_("Contact number must be numeric."))  
         if len(self.contact_number) < 10 or len(self.contact_number) > 15:
-            raise ValidationError("Contact number must be between 10 and 15 digits.")
-
+            raise ValidationError(_("Contact number must be between 10 and 15 digits."))  
     @property
     def full_name(self):
-        """
-        Return the full name of the employee if user has first and last name.
-        """
+        """Return the full name of the employee if user has first and last name."""
         return f"{self.user.first_name} {self.user.last_name}".strip()
 
     def get_department_and_position(self):
-        """
-        Return a string representation of department and position.
-        """
-        return f"{self.position} in {self.department}" if self.department and self.position else "No specific department or position assigned."
+        """Return a string representation of department and position."""
+        return f"{self.position} in {self.department}" if self.department and self.position else _("No specific department or position assigned.") 
 
 class Device(models.Model):
-    device_id = models.CharField(max_length=50, unique=True)  # Device ID assigned by the system
-    location = models.CharField(max_length=100)  # Physical location of the device
-    description = models.TextField(null=True, blank=True)  # Device description
-    ip_address = models.GenericIPAddressField(null=True, blank=True)  # Device IP Address
-    last_sync_time = models.DateTimeField(null=True, blank=True)  # Last time the device was synced
-    serial_number = models.CharField(max_length=255, unique=True,null=True)  # Unique serial number of the device
-    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True)  # Link to the company
+    device_id = models.CharField(max_length=50, unique=True)  
+    location = models.CharField(max_length=100)  
+    description = models.TextField(null=True, blank=True)  
+    ip_address = models.GenericIPAddressField(null=True, blank=True)  
+    last_sync_time = models.DateTimeField(null=True, blank=True)  
+    serial_number = models.CharField(max_length=255, unique=True,null=True)  
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True)  
 
     class Meta:
         verbose_name = "Device"

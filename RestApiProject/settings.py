@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',  # JWT Token Authentication
     'drf_yasg',  # API ডকুমেন্টেশনের জন্য Swagger
     'djoser',  # Djoser কাস্টম ইউজার ম্যানেজমেন্টের জন্য
+    'guardian',
     'authentication', # My Authentication App
     'attendance', # Attendance App
 ]
@@ -80,6 +81,12 @@ MIDDLEWARE = [
 
 
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # Django এর ডিফল্ট ব্যাকএন্ড
+    'guardian.backends.ObjectPermissionBackend',  # Guardian এর ব্যাকএন্ড
+)
+ANONYMOUS_USER_ID = -1  # অ্যাননিমাস ইউজার আইডি সেট করা হচ্ছে
 
 # RestApiProject/settings.py
 

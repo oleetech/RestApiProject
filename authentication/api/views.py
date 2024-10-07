@@ -1,14 +1,117 @@
-from rest_framework import status
+from rest_framework import status, viewsets
+
 from django.contrib.auth import authenticate, login
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
-from django.middleware.csrf import CsrfViewMiddleware
+from rest_framework.exceptions import PermissionDenied  
+from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
+
 from django.utils.translation import gettext as _
-from .serializers import RegisterSerializer
+from .serializers import CompanySerializer,RegisterSerializer
+from .permissions import AuthenticationHasDynamicModelPermission
+from .utils import success_response, error_response, validation_error_response
+
+from ..models import Company
+@method_decorator(csrf_protect, name='dispatch')
+class CompanyView(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing company instances.
+    """
+    permission_classes = [IsAuthenticated, AuthenticationHasDynamicModelPermission]
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]  
+
+    def list(self, request):
+        """
+        List all companies.
+        """
+        try:
+            companies = Company.get_all_companies(request.user)
+            serializer = self.get_serializer(companies, many=True)
+            return success_response("Companies retrieved successfully", data=serializer.data)
+
+        except PermissionDenied as e:
+            return error_response("You do not have permission to view companies", details=str(e), error_type="PermissionDenied")
+
+    def retrieve(self, request, pk=None):
+        """
+        Retrieve a single company by its ID.
+        """
+        try:
+            company = Company.get_company(request.user, pk)
+        except ValueError as e:
+            return error_response("Company not found", details=str(e), status_code=status.HTTP_404_NOT_FOUND)
+        except PermissionDenied as e:
+            return error_response("You do not have permission to view this company", details=str(e), error_type="PermissionDenied")
+
+        serializer = self.get_serializer(company)
+        return success_response("Company retrieved successfully", data=serializer.data)
+
+    def create(self, request):
+        """
+        Create a new company if the user has the necessary permissions.
+        """
+        try:
+            # Call the model's create method
+            company = Company.create_company(request.user, **request.data)
+        except PermissionDenied as e:
+            return error_response("You do not have permission to add a company", details=str(e), error_type="PermissionDenied")
+        except Exception as e:
+            return error_response("Error creating company", details=str(e))
+
+        serializer = CompanySerializer(company)
+        return success_response("Company created successfully", data=serializer.data, status_code=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, pk=None):
+        """
+        Update company fields or activate/deactivate the company based on 'action' field.
+        """
+        company = self.get_object()
+
+        if not request.user.has_perm('authentication.change_company', company):
+            return error_response("You do not have permission to update this company.")
+
+        action = request.data.get('action')
+        if action == 'activate':
+            if not request.user.has_perm('authentication.activate_company', company):
+                return error_response("You do not have permission to activate this company.")
+            company.is_active = True
+        elif action == 'deactivate':
+            if not request.user.has_perm('authentication.deactivate_company', company):
+                return error_response("You do not have permission to deactivate this company.")
+            company.is_active = False
+        else:
+            serializer = self.get_serializer(company, data=request.data, partial=True)
+            if serializer.is_valid():
+                company = serializer.save()
+                return success_response("Company updated successfully", data=serializer.data)
+            return validation_error_response(serializer.errors)
+
+        company.save()
+        serializer = self.get_serializer(company)
+        return success_response("Company status updated successfully", data=serializer.data)
+
+    def destroy(self, request, pk=None):
+        """
+        Delete a company if the user has the necessary permission.
+        """
+        company = self.get_object()  # Get the company instance
+
+        try:
+            # Call the model's delete method
+            Company.delete_company(request.user, company)
+        except PermissionDenied as e:
+            return error_response("You do not have permission to delete this company", details=str(e), error_type="PermissionDenied")
+        except Exception as e:
+            return error_response("Error deleting company", details=str(e))
+
+        return success_response("Company deleted successfully", status_code=status.HTTP_204_NO_CONTENT)
 
 # Register View
 class RegisterView(APIView):
@@ -20,10 +123,6 @@ class RegisterView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 
 
 

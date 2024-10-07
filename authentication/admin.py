@@ -4,6 +4,8 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.auth import get_user_model
 from .models import Company 
 CustomUser = get_user_model()
+from django.core.exceptions import PermissionDenied
+from django.utils.translation import gettext_lazy as _
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -39,6 +41,29 @@ admin.site.register(Group, CustomGroupAdmin)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ('name', 'address')  # Fields to display in the list view
     search_fields = ('name',)  # Searchable fields in the admin interface
+    actions = ['activate_company', 'deactivate_company']  # Registering custom actions
+
+    def activate_company(self, request, queryset):
+        # Check if the user has the 'activate_company' permission
+        if not request.user.has_perm('authentication.activate_company'):
+            raise PermissionDenied("You do not have permission to activate companies.")
+        
+        # Activate the selected companies
+        queryset.update(is_active=True)
+        self.message_user(request, _("Selected companies have been activated."))
+
+    def deactivate_company(self, request, queryset):
+        # Check if the user has the 'deactivate_company' permission
+        if not request.user.has_perm('authentication.deactivate_company'):
+            raise PermissionDenied("You do not have permission to deactivate companies.")
+        
+        # Deactivate the selected companies
+        queryset.update(is_active=False)
+        self.message_user(request, _("Selected companies have been deactivated."))
+
+    # Action display names
+    activate_company.short_description = _("Activate selected companies")
+    deactivate_company.short_description = _("Deactivate selected companies")
 
 # Register the Company model with the admin site
 admin.site.register(Company, CompanyAdmin)

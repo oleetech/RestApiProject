@@ -217,4 +217,7 @@ class WorkHours(models.Model):
     overtime_hours = models.DurationField(null=True, blank=True)  # Optional overtime hours
 
     def __str__(self):
-        return f"{self.employee.user.username} - {self.date} - {self.total_hours}"           
+        return f"{self.employee.user.username} - {self.date} - {self.total_hours}"      
+
+
+

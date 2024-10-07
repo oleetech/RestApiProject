@@ -132,3 +132,4 @@ class WorkHoursAdmin(admin.ModelAdmin):
     list_display = ('id', 'employee', 'date', 'total_hours', 'overtime_hours')
     search_fields = ('employee__user__username', 'date')
     list_filter = ('date',)
+

@@ -22,7 +22,7 @@ from drf_yasg import openapi
 
 # Custom imports (adjust as needed for your project)
 from .utils import success_response, error_response, validation_error_response
-from .permission import AttendanceHasDynamicModelPermission
+from .permission import AttendanceHasDynamicModelPermission,CustomPermissionCheckUp
 from ..models import Employee, Device, AttendanceLog, Shift, Schedule, WorkHours
 from .serializers import (
     EmployeeSerializer,

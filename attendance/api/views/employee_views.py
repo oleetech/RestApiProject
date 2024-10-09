@@ -6,20 +6,9 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated,AttendanceHasDynamicModelPermission]
+    permission_classes = [IsAuthenticated,AttendanceHasDynamicModelPermission,CustomPermissionCheckUp]
     throttle_classes = [UserRateThrottle]
 
-    @method_decorator(csrf_exempt)  # Disabling CSRF protection
-    def dispatch(self, *args, **kwargs):
-        # Add custom checks or logging here
-        print(f"Request Method: {self.request.method} | Request Path: {self.request.path}")
-        
-        response = super().dispatch(*args, **kwargs)
-
-        # Applying CSRF protection
-        CsrfViewMiddleware().process_view(self.request, None, (), {})
-
-        return response
 
     @swagger_auto_schema(
         operation_summary="List Employees",
@@ -68,10 +57,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
 
             # Check if the employee's company matches the user's company
-            if instance.user.company.id != request.user.company.id:
-                return error_response("You do not have permission to access this employee.", 
-                                    error_type="PermissionDenied", 
-                                    status_code=status.HTTP_403_FORBIDDEN)
+            # if instance.user.company.id != request.user.company.id:
+            #     return error_response("You do not have permission to access this employee.", 
+            #                         error_type="PermissionDenied", 
+            #                         status_code=status.HTTP_403_FORBIDDEN)
 
             # If the employee is in the same company, serialize the data
             serializer = self.get_serializer(instance)
@@ -124,11 +113,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         """Update an employee object based on user group and company (PUT)."""
         instance = self.get_object()
 
-        # Ensure the user and employee are in the same company
-        if instance.user.company.id != request.user.company.id:
-            return error_response("You do not belong to the same company.", 
-                                  error_type="PermissionDenied", 
-                                  status_code=status.HTTP_403_FORBIDDEN)
+        # # Ensure the user and employee are in the same company
+        # if instance.user.company.id != request.user.company.id:
+        #     return error_response("You do not belong to the same company.", 
+        #                           error_type="PermissionDenied", 
+        #                           status_code=status.HTTP_403_FORBIDDEN)
 
         # Allow full update regardless of user group
         serializer = self.get_serializer(instance, data=request.data)
@@ -223,10 +212,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             
             # Check if the request user's company matches the instance's company
-            if instance.user.company.id != request.user.company.id:
-                return error_response("You do not belong to the same company.", 
-                                    error_type="PermissionDenied", 
-                                    status_code=status.HTTP_403_FORBIDDEN)
+            # if instance.user.company.id != request.user.company.id:
+            #     return error_response("You do not belong to the same company.", 
+            #                         error_type="PermissionDenied", 
+            #                         status_code=status.HTTP_403_FORBIDDEN)
 
             # Perform the delete operation
             self.perform_destroy(instance)

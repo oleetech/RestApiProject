@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'guardian',
     'authentication', # My Authentication App
     'attendance', # Attendance App
+    'django_extensions',  # Add this line
+
 ]
 
 AUTH_USER_MODEL = 'authentication.CustomUser'  # আপনার অ্যাপের নাম দিয়ে 'your_app_name' রিপ্লেস করুন 
@@ -179,6 +181,16 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'djangotest',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST':'localhost',
+#         'PORT':'3306',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

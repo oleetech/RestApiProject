@@ -7,7 +7,22 @@ from .validators import validate_company_name
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.models import UserObjectPermission
 
+class Subscription(models.Model):
+    PACKAGE_CHOICES = [
+        ('Free', 'Free'),
+        ('Standard', 'Standard'),
+        ('Premium', 'Premium'),
+        ('Enterprise', 'Enterprise'),
+    ]
 
+    name = models.CharField(max_length=50, choices=PACKAGE_CHOICES, default='Free')
+    price = models.DecimalField(max_digits=8, decimal_places=2)  # e.g., $199.99
+    max_employees = models.IntegerField(default=10)  # Limit number of employees
+    max_storage = models.IntegerField(default=10)  # Limit in GB for document management
+    advanced_features = models.BooleanField(default=False)  # Toggle advanced features like performance tracking
+
+    def __str__(self):
+        return self.name
 
 class Company(models.Model):
     name = models.CharField(
@@ -20,7 +35,13 @@ class Company(models.Model):
     )
     address = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)  # Link to Subscription
+    employee_limit = models.IntegerField(default=10)  # Limit employees based on subscription
 
+    def get_subscription_details(self):
+        if self.subscription:
+            return f"Company is on {self.subscription.name} plan with max employees {self.subscription.max_employees}"
+        return "No subscription plan assigned"
     class Meta:
         permissions = [
             ("authentication.change_company", _("Can change company")),

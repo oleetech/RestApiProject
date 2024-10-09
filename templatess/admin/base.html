@@ -34,35 +34,95 @@
     </div>
     <hr class="horizontal dark mt-0">
     <div class="collapse navbar-collapse w-auto ps ps--active-y" id="sidenav-collapse-main">
-      <ul class="navbar-nav">
-        <!-- Loop through each app in the app list -->
-        {% if app_list %}
-          {% for app in app_list %}
-            <!-- Application Menu Item -->
-            <li class="nav-item">
-              <a class="nav-link {% if app.app_url in request.path|urlencode %}active{% endif %}" href="{{ app.app_url }}">
-                <!-- Icon Placeholder (you can dynamically set the icon per app if you like) -->
-                <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                  <!-- You can add an icon here based on app or use a default icon -->
-                  <svg width="12px" height="12px" viewBox="0 0 43 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                    <title>credit-card</title>
-                    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                      <g transform="translate(-2169.000000, -745.000000)" fill="#FFFFFF" fill-rule="nonzero">
-                        <g transform="translate(1716.000000, 291.000000)">
-                          <g transform="translate(453.000000, 454.000000)">
-                            <path class="color-background" d="M43,10.7482083 L43,3.58333333 C43,1.60354167 41.3964583,0 39.4166667,0 L3.58333333,0 C1.60354167,0 0,1.60354167 0,3.58333333 L0,10.7482083 L43,10.7482083 Z" opacity="0.593633743"></path>
-                            <path class="color-background" d="M0,16.125 L0,32.25 C0,34.2297917 1.60354167,35.8333333 3.58333333,35.8333333 L39.4166667,35.8333333 C41.3964583,35.8333333 43,34.2297917 43,32.25 L43,16.125 L0,16.125 Z M19.7083333,26.875 L7.16666667,26.875 L7.16666667,23.2916667 L19.7083333,23.2916667 L19.7083333,26.875 Z M35.8333333,26.875 L28.6666667,26.875 L28.6666667,23.2916667 L35.8333333,23.2916667 L35.8333333,26.875 Z"></path>
-                          </g>
-                        </g>
-                      </g>
+	
+	
+	
+	
+	
+	{% if app_list %}
+  {% for app in app_list %}
+    <div class="app-{{ app.app_label }} module{% if app.app_url in request.path|urlencode %} current-app{% endif %}">
+      <table>
+        <caption>
+          <a href="{{ app.app_url }}" class="section" title="{% blocktranslate with name=app.name %}Models in the {{ name }} application{% endblocktranslate %}">{{ app.name }}</a>
+        </caption>
+        {% for model in app.models %}
+          <tr class="model-{{ model.object_name|lower }}{% if model.admin_url in request.path|urlencode %} current-model{% endif %}">
+            {% if model.admin_url %}
+              <th scope="row"><a href="{{ model.admin_url }}"{% if model.admin_url in request.path|urlencode %} aria-current="page"{% endif %}>{{ model.name }}</a></th>
+            {% else %}
+              <th scope="row">{{ model.name }}</th>
+            {% endif %}
+
+            {% if model.add_url %}
+              <td><a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a></td>
+            {% else %}
+              <td></td>
+            {% endif %}
+
+            {% if model.admin_url and show_changelinks %}
+              {% if model.view_only %}
+                <td><a href="{{ model.admin_url }}" class="viewlink">{% translate 'View' %}</a></td>
+              {% else %}
+                <td><a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a></td>
+              {% endif %}
+            {% elif show_changelinks %}
+              <td></td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>{% translate 'You don’t have permission to view or edit anything.' %}</p>
+{% endif %}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+   <ul class="navbar-nav">
+  <!-- Loop through each app in the app list -->
+  {% if app_list %}
+    {% for app in app_list %}
+      <!-- Application Menu Item -->
+      <li class="nav-item">
+        <a 
+          class="nav-link d-flex align-items-center justify-content-between {% if app.app_url in request.path|urlencode %}active{% endif %}" 
+          data-bs-toggle="collapse" 
+          href="#collapseApp{{ forloop.counter }}" 
+          role="button" 
+          aria-expanded="false" 
+          aria-controls="collapseApp{{ forloop.counter }}"
+        >
+          <!-- Icon Placeholder -->
+          <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+            <!-- Icon SVG -->
+            <svg width="12px" height="12px" viewBox="0 0 43 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <title>credit-card</title>
+              <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                <g transform="translate(-2169.000000, -745.000000)" fill="#FFFFFF" fill-rule="nonzero">
+                  <g transform="translate(1716.000000, 291.000000)">
+                    <g transform="translate(453.000000, 454.000000)">
+                      <path class="color-background" d="M43,10.7482083 L43,3.58333333 C43,1.60354167 41.3964583,0 39.4166667,0 L3.58333333,0 C1.60354167,0 0,1.60354167 0,3.58333333 L0,10.7482083 L43,10.7482083 Z" opacity="0.593633743"></path>
+                      <path class="color-background" d="M0,16.125 L0,32.25 C0,34.2297917 1.60354167,35.8333333 3.58333333,35.8333333 L39.4166667,35.8333333 C41.3964583,35.8333333 43,34.2297917 43,32.25 L43,16.125 L0,16.125 Z M19.7083333,26.875 L7.16666667,26.875 L7.16666667,23.2916667 L19.7083333,23.2916667 L19.7083333,26.875 Z M35.8333333,26.875 L28.6666667,26.875 L28.6666667,23.2916667 L35.8333333,23.2916667 L35.8333333,26.875 Z"></path>
                     </g>
-                  </svg>
-                </div>
-                <span class="nav-link-text ms-1">{{ app.name }}</span>
-              </a>
-            </li>
-      
-            <!-- Loop through each model in the current app -->
+                  </g>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <span class="nav-link-text ms-1">{{ app.name }}</span>
+        </a>
+        <!-- Collapsible section for models -->
+        <div class="collapse" id="collapseApp{{ forloop.counter }}">
+          <ul class="navbar-nav">
             {% for model in app.models %}
             <li class="nav-item ms-3">
               <a class="nav-link {% if model.admin_url in request.path|urlencode %}active{% endif %}" href="{{ model.admin_url }}">
@@ -86,17 +146,20 @@
               </a>
             </li>
             {% endfor %}
-          {% endfor %}
-        {% else %}
-          <!-- Fallback message if no apps are available -->
-          <li class="nav-item">
-            <a class="nav-link text-danger disabled" href="#">
-              <span class="nav-link-text ms-1">{% translate 'No applications available' %}</span>
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-      
+          </ul>
+        </div>
+      </li>
+    {% endfor %}
+  {% else %}
+    <!-- Fallback message if no apps are available -->
+    <li class="nav-item">
+      <a class="nav-link text-danger disabled" href="#">
+        <span class="nav-link-text ms-1">{% translate 'No applications available' %}</span>
+      </a>
+    </li>
+  {% endif %}
+</ul>
+
     <div class="ps__rail-x" style="left: 0px; bottom: -200px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 200px; right: 0px; height: 161px;"><div class="ps__thumb-y" tabindex="0" style="top: 66px; height: 53px;"></div></div></div>
 
   <div class="ps__rail-x" style="left: 0px; bottom: -110px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 110px; height: 489px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 90px; height: 399px;"></div></div>
@@ -145,7 +208,17 @@
     </nav>
     <!-- End Navbar -->
     <div class="container-fluid py-4">
-
+        <div id="content" class="{% block coltype %}colM{% endblock %}">
+          {% block pretitle %}{% endblock %}
+          {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+          {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
+          {% block content %}
+            {% block object-tools %}{% endblock %}
+            {{ content }}
+          {% endblock %}
+          {% block sidebar %}{% endblock %}
+          <br class="clear">
+        </div>
 
       <footer class="footer pt-3  ">
         <div class="container-fluid">

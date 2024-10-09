@@ -41,3 +41,16 @@ class AttendanceHasDynamicModelPermission(permissions.BasePermission):
 
         required_permission = f'attendance.{perm_action}_{model_name}'
         return request.user.has_perm(required_permission, obj)        
+    
+    
+class CustomPermissionCheckUp(permissions.BasePermission):
+    """
+    Custom permission to only allow access if the user's company matches the object's company.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Only check permissions for view, update, and delete actions
+        if request.method in permissions.SAFE_METHODS or request.method in ['PUT', 'PATCH', 'DELETE']:
+            # Check if the user's company matches the object's user's company
+            return obj.user.company.id == request.user.company.id
+        return True  # Allow POST (create) requests without company check

@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
-from authentication.models import CustomUser, Company  # Correctly import the Company model
-from datetime import timedelta
+from authentication.models import CustomUser, Company 
 from django.utils import timezone
 from django.utils.translation import gettext as _
 

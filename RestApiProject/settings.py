@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+
+
 import os
 from pathlib import Path
 
@@ -31,7 +33,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    # 'admin_volt.apps.AdminVoltConfig',
+    'admin_soft',  # আপনার লোকাল admin_soft ফোল্ডার থেকে লোড হবে
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -125,7 +128,7 @@ SIMPLE_JWT = {
 # Add the following if not already present
 LOGIN_URL = 'login'  # Redirect to login if not logged in
 LOGOUT_URL = 'logout'  # Redirect to logout
-LOGIN_REDIRECT_URL = 'home'  # Redirect after login
+LOGIN_REDIRECT_URL = '/'  # Redirect after login
 LOGOUT_REDIRECT_URL = 'home'  # Redirect after logout
 
 # RestApiProject/settings.py

@@ -27,6 +27,12 @@ class CustomUserAdmin(BaseUserAdmin):
 class CustomGroupAdmin(GroupAdmin):  # Inherits from GroupAdmin
     filter_horizontal = ('permissions',)
 
+# Register the Permission model in the admin panel
+class PermissionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'codename', 'content_type']
+    search_fields = ['name', 'codename']
+    list_filter = ['content_type']
+
 # Unregister the default Group admin
 admin.site.unregister(Group)
 
@@ -35,35 +41,77 @@ admin.site.register(CustomUser, CustomUserAdmin)
 
 # Register your CustomGroupAdmin with the admin site
 admin.site.register(Group, CustomGroupAdmin)
-
+# Register the Permission model in the admin site
+admin.site.register(Permission, PermissionAdmin)
 
 # Admin class for Company model
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ('name', 'address')  # Fields to display in the list view
     search_fields = ('name',)  # Searchable fields in the admin interface
-    actions = ['activate_company', 'deactivate_company']  # Registering custom actions
 
-    def activate_company(self, request, queryset):
-        # Check if the user has the 'activate_company' permission
-        if not request.user.has_perm('authentication.activate_company'):
-            raise PermissionDenied("You do not have permission to activate companies.")
-        
-        # Activate the selected companies
-        queryset.update(is_active=True)
-        self.message_user(request, _("Selected companies have been activated."))
-
-    def deactivate_company(self, request, queryset):
-        # Check if the user has the 'deactivate_company' permission
-        if not request.user.has_perm('authentication.deactivate_company'):
-            raise PermissionDenied("You do not have permission to deactivate companies.")
-        
-        # Deactivate the selected companies
-        queryset.update(is_active=False)
-        self.message_user(request, _("Selected companies have been deactivated."))
-
-    # Action display names
-    activate_company.short_description = _("Activate selected companies")
-    deactivate_company.short_description = _("Deactivate selected companies")
 
 # Register the Company model with the admin site
 admin.site.register(Company, CompanyAdmin)
+
+from .models import Subscription
+
+class SubscriptionAdmin(admin.ModelAdmin):
+    # Fields to display in the list view
+    list_display = ('name', 'price', 'max_employees', 'max_storage', 'advanced_features')
+
+    # Searchable fields in the admin interface
+    search_fields = ('name',)
+
+    # Filters for the list view
+    list_filter = ('name', 'advanced_features')
+
+    # Default ordering in the admin list view
+    ordering = ('-price',)  # Display by price descending order
+
+    # Customization of how fields are grouped in the form view (for a structured layout)
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'price'),
+            'classes': ('wide',),  # 'wide' is a built-in CSS class for width
+        }),
+        ('Features', {
+            'fields': ('max_employees', 'max_storage', 'advanced_features'),
+            'classes': ('wide',),  # Same here
+        }),
+    )
+
+# একটি কাস্টম অ্যাকশন যুক্ত করা হচ্ছে
+actions = ['set_to_free_subscription']  
+# এখানে 'actions' নামে একটি লিস্ট তৈরি করা হয়েছে, যেখানে 'set_to_free_subscription' নামে একটি অ্যাকশন যুক্ত করা হয়েছে।
+# অ্যাকশনটি অ্যাডমিন প্যানেলের ড্রপডাউন মেনুতে প্রদর্শিত হবে।
+# প্রতিবার নতুন অ্যাকশন যুক্ত করলে এর জন্য একই নামে একটি ফাংশন তৈরি করতে হবে।
+# 'set_to_free_subscription' অ্যাকশনের মাধ্যমে নির্বাচিত সাবস্ক্রিপশনগুলোর উপর কাজ করা হবে।
+
+# সিলেক্ট করা সাবস্ক্রিপশনগুলোকে 'Free' প্ল্যানে সেট করার জন্য কাস্টম অ্যাকশন তৈরি
+def set_to_free_subscription(self, request, queryset):
+    # 'queryset' হলো নির্বাচিত সাবস্ক্রিপশনগুলোর তালিকা।
+    # queryset.update(name='Free', price=0.00) মেথডটি নির্বাচন করা সাবস্ক্রিপশনগুলোর 'name' এবং 'price' আপডেট করবে।
+    
+    # 'name' ফিল্ডকে 'Free' এবং 'price' ফিল্ডকে 0.00 এ আপডেট করা হবে।
+    queryset.update(name='Free', price=0.00)  
+    # ১. নির্বাচিত প্রতিটি সাবস্ক্রিপশনের 'name' ফিল্ডকে 'Free' করা হচ্ছে।
+    # ২. নির্বাচিত প্রতিটি সাবস্ক্রিপশনের 'price' ফিল্ডকে 0.00 এ সেট করা হচ্ছে, অর্থাৎ সাবস্ক্রিপশনটি বিনামূল্যে করা হচ্ছে।
+
+    # self.message_user(request, "Selected subscriptions are set to 'Free'.") 
+    # এই ফাংশনটি অ্যাডমিন ইউজারকে একটি সফলতার মেসেজ পাঠাবে।
+    # মেসেজটি অ্যাডমিন প্যানেলের উপরের দিকে প্রদর্শিত হবে।
+    self.message_user(request, "Selected subscriptions are set to 'Free'.")
+    # এখানে "Selected subscriptions are set to 'Free'." মেসেজটি দেখানো হবে, যাতে অ্যাডমিন ইউজার জানতে পারে 
+    # যে নির্বাচিত সাবস্ক্রিপশনগুলো সফলভাবে 'Free' এ আপডেট হয়েছে।
+
+# অ্যাকশনের জন্য বর্ণনা (description) যা অ্যাডমিন প্যানেলের ড্রপডাউন মেনুতে প্রদর্শিত হবে।
+set_to_free_subscription.short_description = "Set selected subscriptions to Free plan"
+# 'set_to_free_subscription' এর জন্য একটি short_description সেট করা হয়েছে, যা ড্রপডাউন মেনুতে
+# "Set selected subscriptions to Free plan" হিসেবে দেখাবে।
+
+
+
+# Register the Subscription model with the admin site
+admin.site.register(Subscription, SubscriptionAdmin)
+
+

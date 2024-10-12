@@ -4,8 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator, MinLengthValidator, EmailValidator  
 from django.core.exceptions import ValidationError, PermissionDenied  
 from .validators import validate_company_name  
-from guardian.shortcuts import assign_perm, remove_perm
-from guardian.models import UserObjectPermission
+
 
 class Subscription(models.Model):
     PACKAGE_CHOICES = [
@@ -16,10 +15,10 @@ class Subscription(models.Model):
     ]
 
     name = models.CharField(max_length=50, choices=PACKAGE_CHOICES, default='Free')
-    price = models.DecimalField(max_digits=8, decimal_places=2)  # e.g., $199.99
-    max_employees = models.IntegerField(default=10)  # Limit number of employees
-    max_storage = models.IntegerField(default=10)  # Limit in GB for document management
-    advanced_features = models.BooleanField(default=False)  # Toggle advanced features like performance tracking
+    price = models.DecimalField(max_digits=8, decimal_places=2)  
+    max_employees = models.IntegerField(default=10)  
+    max_storage = models.IntegerField(default=10)  
+    advanced_features = models.BooleanField(default=False)  
 
     def __str__(self):
         return self.name
@@ -35,26 +34,18 @@ class Company(models.Model):
     )
     address = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)  # Link to Subscription
-    employee_limit = models.IntegerField(default=10)  # Limit employees based on subscription
+    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)  
+    employee_limit = models.IntegerField(default=10)  
+    logo = models.ImageField(upload_to='uploads/company_logos/', blank=True, null=True)
 
     def get_subscription_details(self):
         if self.subscription:
             return f"Company is on {self.subscription.name} plan with max employees {self.subscription.max_employees}"
         return "No subscription plan assigned"
-    class Meta:
-        permissions = [
-            ("authentication.change_company", _("Can change company")),
-            ("authentication.delete_company", _("Can delete company")),
-            ("authentication.view_company", _("Can view company")),
-            ("authentication.add_company", _("Can add company")),
-            ("authentication.activate_company", _("Can activate company")),
-            ("authentication.deactivate_company", _("Can deactivate company")),
 
-        ]
 
-    def __str__(self):
-        return self.name
+
+
 
     @property
     def is_inactive(self):
@@ -71,7 +62,6 @@ class Company(models.Model):
         self.clean()  # Call clean method for validation before saving
         super().save(*args, **kwargs)
 
-    # Permissions using django-guardian
     def assign_permissions(self, user):
         """Assign permissions to a user for this company."""
         assign_perm('view_company', user, self)
@@ -84,11 +74,9 @@ class Company(models.Model):
         remove_perm('change_company', user, self)
         remove_perm('delete_company', user, self)
 
+    # Class methods can be simplified
     @classmethod
     def create_company(cls, user, **kwargs):
-        if not user.has_perm('authentication.add_company'):
-            raise PermissionDenied("You do not have permission to add a company.")
-
         company = cls(**kwargs)
         company.full_clean()  # Validate the model
         company.save()        # Save the model instance
@@ -97,40 +85,25 @@ class Company(models.Model):
 
     @classmethod
     def update_company(cls, user, instance, **kwargs):
-        if not user.has_perm('change_company', instance):
-            raise PermissionDenied("You do not have permission to change this company.")
-
         for field, value in kwargs.items():
-            if field == 'name':
-                instance.name = value
-            elif field == 'address':
-                instance.address = value
-            elif field == 'is_active':
-                instance.is_active = value
-
+            setattr(instance, field, value)
         instance.full_clean()  # Ensure all validations are met
         instance.save()        # Save the model instance
 
     @classmethod
-    def delete_company(cls, user, instance):
-        if not user.has_perm('delete_company', instance):
-            raise PermissionDenied("You do not have permission to delete this company.")
+    def delete_company(cls, instance):
         instance.delete()
 
     @classmethod
     def get_company(cls, user, pk):
-        company = cls.objects.get(pk=pk)
-        if not user.has_perm('view_company', company):
-            raise PermissionDenied("You do not have permission to view this company.")
-        return company
+        return cls.objects.get(pk=pk)
 
     @classmethod
     def get_all_companies(cls, user):
-        if not user.has_perm('view_company'):
-            raise PermissionDenied("You do not have permission to view companies.")
         return cls.objects.all()
 
-
+    def __str__(self):
+        return self.name
 
 # CustomUserManager creates a custom user.
 class CustomUserManager(BaseUserManager):

@@ -22,6 +22,8 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+   path('', include('admin_soft.urls')),
+
     path('admin/', admin.site.urls),
     re_path(r'^auth/', include('djoser.urls')),  # Djoser URL
     re_path(r'^auth/', include('djoser.urls.jwt')),  # Djoser JWT URL

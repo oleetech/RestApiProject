@@ -17,6 +17,20 @@ class Employee(models.Model):
         verbose_name_plural = _("Employees")  
         ordering = ['date_of_joining']  
 
+    def save(self, *args, **kwargs):
+        # Check if user has a company
+        if self.user.company:
+            # Count the current number of employees in the company
+            current_employee_count = self.user.company.employees.count()
+            max_employees_allowed = self.user.company.subscription.max_employees
+
+            # Check if the current number of employees exceeds the allowed limit
+            if current_employee_count >= max_employees_allowed:
+                raise ValidationError(f"Cannot add more employees. The maximum limit of {max_employees_allowed} employees for this company's subscription has been reached.")
+        
+        super().save(*args, **kwargs)  # Call the original save method
+
+        
     def __str__(self):
         return f"{self.user.username} ({self.employee_id})"  
 

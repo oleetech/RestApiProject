@@ -1,6 +1,6 @@
 from rest_framework import status, viewsets
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login,logout
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 
 from django.utils.translation import gettext as _
 from .serializers import CompanySerializer,RegisterSerializer
-from .permissions import AuthenticationHasDynamicModelPermission
+from .permissions import DynamicModelLevelPermission,DynamicObjectLevelPermission
 from .utils import success_response, error_response, validation_error_response
 
 from ..models import Company
@@ -22,7 +22,7 @@ class CompanyView(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing company instances.
     """
-    permission_classes = [IsAuthenticated, AuthenticationHasDynamicModelPermission]
+    permission_classes = [IsAuthenticated, DynamicModelLevelPermission,DynamicObjectLevelPermission]
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     throttle_classes = [AnonRateThrottle, UserRateThrottle]  
@@ -68,43 +68,11 @@ class CompanyView(viewsets.ModelViewSet):
         serializer = CompanySerializer(company)
         return success_response("Company created successfully", data=serializer.data, status_code=status.HTTP_201_CREATED)
 
-    def partial_update(self, request, pk=None):
-        """
-        Update company fields or activate/deactivate the company based on 'action' field.
-        """
-        company = self.get_object()
 
-        if not request.user.has_perm('authentication.change_company', company):
-            return error_response("You do not have permission to update this company.")
-
-        action = request.data.get('action')
-        if action == 'activate':
-            if not request.user.has_perm('authentication.activate_company', company):
-                return error_response("You do not have permission to activate this company.")
-            company.is_active = True
-        elif action == 'deactivate':
-            if not request.user.has_perm('authentication.deactivate_company', company):
-                return error_response("You do not have permission to deactivate this company.")
-            company.is_active = False
-        else:
-            serializer = self.get_serializer(company, data=request.data, partial=True)
-            if serializer.is_valid():
-                company = serializer.save()
-                return success_response("Company updated successfully", data=serializer.data)
-            return validation_error_response(serializer.errors)
-
-        company.save()
-        serializer = self.get_serializer(company)
-        return success_response("Company status updated successfully", data=serializer.data)
 
     def destroy(self, request, pk=None):
-        """
-        Delete a company if the user has the necessary permission.
-        """
-        company = self.get_object()  # Get the company instance
-
+        company = self.get_object()  
         try:
-            # Call the model's delete method
             Company.delete_company(request.user, company)
         except PermissionDenied as e:
             return error_response("You do not have permission to delete this company", details=str(e), error_type="PermissionDenied")
@@ -189,6 +157,9 @@ class LogoutView(APIView):
             # Blacklist the refresh token
             token = RefreshToken(refresh_token)
             token.blacklist()  # ব্ল্যাকলিস্ট করা হচ্ছে
+            
+            # Logout from Django session
+            logout(request)  # Django সেশনে লগ আউট করা হচ্ছে
 
             # Optionally, delete the cookie from the response
             response = Response(status=status.HTTP_205_RESET_CONTENT)

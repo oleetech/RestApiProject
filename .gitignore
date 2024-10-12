@@ -1,5 +1,5 @@
 # Python bytecode
-__pycache__/
+*__pycache__/
 *.py[cod]
 
 # Django migrations
@@ -22,3 +22,5 @@ local_settings.py
 venv/
 ENV/
 env/
+
+*uploads/

@@ -27,30 +27,53 @@ class Company(models.Model):
     name = models.CharField(
         max_length=255,
         unique=True,
+        verbose_name=_("Company Name"),  
+        help_text=_("Enter the official name of the company (must not contain numbers)."),  
         validators=[
             MinLengthValidator(3),
             RegexValidator(regex=r'^[^\d]*$', message=_("Company name must not contain numbers."))
         ]
     )
-    address = models.CharField(max_length=255, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True)  
-    employee_limit = models.IntegerField(default=10)  
-    logo = models.ImageField(upload_to='uploads/company_logos/', blank=True, null=True)
+    address = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name=_("Company Address"),  
+        help_text=_("Enter the full address of the company.")  
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Is Active?"),  
+        help_text=_("Indicates whether the company is currently active.")  
+    )
+    subscription = models.ForeignKey(
+        'Subscription',
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name=_("Subscription Plan"),  
+        help_text=_("Select the subscription plan for the company.")  
+    )
+    employee_limit = models.IntegerField(
+        default=10,
+        verbose_name=_("Employee Limit"),  
+        help_text=_("Maximum number of employees allowed in this company.")  
+    )
+    logo = models.ImageField(
+        upload_to='uploads/company_logos/',
+        blank=True,
+        null=True,
+        verbose_name=_("Company Logo"),  
+        help_text=_("Upload the company's official logo.")  
+    )
+    # Custom field-level validation for employee_limit
+    def clean_employee_limit(self):
+        if self.employee_limit <= 0:
+            raise ValidationError(_("Employee limit must be a positive number."))
+        return self.employee_limit
 
-    def get_subscription_details(self):
-        if self.subscription:
-            return f"Company is on {self.subscription.name} plan with max employees {self.subscription.max_employees}"
-        return "No subscription plan assigned"
 
 
-
-
-
-    @property
-    def is_inactive(self):
-        return not self.is_active
-
+    # Model-level validation in the clean method
     def clean(self):
         super().clean()
         if self.address and len(self.address) > 255:
@@ -101,6 +124,19 @@ class Company(models.Model):
     @classmethod
     def get_all_companies(cls, user):
         return cls.objects.all()
+
+    def get_subscription_details(self):
+        if self.subscription:
+            return f"Company is on {self.subscription.name} plan with max employees {self.subscription.max_employees}"
+        return "No subscription plan assigned"
+
+
+
+
+
+    @property
+    def is_inactive(self):
+        return not self.is_active
 
     def __str__(self):
         return self.name

@@ -73,6 +73,8 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'attendance', 'locale'),  # App-specific locale directory
 ]
 
+
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS Middleware
     'django.middleware.security.SecurityMiddleware',
@@ -164,7 +166,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                                    
+                'admin_soft.context_processors.languages',  # <- Update this line
+                'attendance.context_processors.languages',  # <- Update this line
+
 
             ],
         },

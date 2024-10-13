@@ -6,6 +6,7 @@ from django.urls import path, re_path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from django.conf.urls.i18n import i18n_patterns
 
 # Swagger API ডকুমেন্টেশন সেটআপ
 schema_view = get_schema_view(
@@ -33,5 +34,6 @@ urlpatterns = [
 
     path('auth-api/', include('authentication.api.urls')),
     path('attendance-api/', include('attendance.api.urls')),
+    path('set_language/', include('django.conf.urls.i18n')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

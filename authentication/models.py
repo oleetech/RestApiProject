@@ -241,4 +241,4 @@ class CustomUser(AbstractUser):
         """
         Return the user's email as a string.
         """
-        return self.email            
+        return self.username            

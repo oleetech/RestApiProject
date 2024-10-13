@@ -1,0 +1,473 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-13 20:46+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\admin_soft\forms.py:9 .\admin_soft\forms.py:36
+msgid "Password"
+msgstr ""
+
+#: .\admin_soft\forms.py:13
+msgid "Password Confirmation"
+msgstr ""
+
+#: .\admin_soft\templates\accounts\login.html:89
+#: .\admin_soft\templates\accounts\register.html:108
+#: .\admin_soft\templates\admin\auth\user\change_password.html:106
+#: .\admin_soft\templates\admin\login.html:93
+msgid "Please correct the error below."
+msgstr ""
+
+#: .\admin_soft\templates\accounts\login.html:91
+#: .\admin_soft\templates\accounts\register.html:110
+#: .\admin_soft\templates\admin\auth\user\change_password.html:108
+#: .\admin_soft\templates\admin\login.html:95
+#: .\admin_soft\templates\registration\password_change_form.html:83
+msgid "Please correct the errors below."
+msgstr ""
+
+#: .\admin_soft\templates\admin\actions.html:17
+msgid "Run the selected action"
+msgstr ""
+
+#: .\admin_soft\templates\admin\actions.html:18
+msgid "Go"
+msgstr ""
+
+#: .\admin_soft\templates\admin\actions.html:28
+msgid "Click here to select the objects across all pages"
+msgstr ""
+
+#: .\admin_soft\templates\admin\actions.html:28
+#, python-format
+msgid ""
+"\n"
+"                            Select all %(total_count)s %(module_name)s"
+msgstr ""
+
+#: .\admin_soft\templates\admin\actions.html:31
+msgid "Clear selection"
+msgstr ""
+
+#: .\admin_soft\templates\admin\auth\user\add_form.html:6
+msgid ""
+"First, enter a username and password. Then, you'll be able to edit more user "
+"options."
+msgstr ""
+
+#: .\admin_soft\templates\admin\auth\user\add_form.html:8
+msgid "Enter a username and password."
+msgstr ""
+
+#: .\admin_soft\templates\admin\auth\user\change_password.html:41
+#: .\admin_soft\templates\registration\password_change_done.html:11
+msgid "Change password"
+msgstr ""
+
+#: .\admin_soft\templates\admin\auth\user\change_password.html:55
+#, python-format
+msgid ""
+"\n"
+"                            Enter a new password for the user\n"
+"                            <strong>%(username)s</strong>.\n"
+"                        "
+msgstr ""
+
+#: .\admin_soft\templates\admin\auth\user\change_password.html:91
+#: .\admin_soft\templates\registration\password_change_form.html:69
+msgid "Change my password"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_form.html:45
+#, python-format
+msgid ""
+"Add\n"
+"                                %(name)s"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_form.html:63
+#: .\admin_soft\templates\admin\change_list_object_tools.html:12
+#, python-format
+msgid "Add %(name)s"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_form_object_tools.html:8
+#: .\admin_soft\templates\admin\object_history.html:36
+msgid "History"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_form_object_tools.html:13
+#: .\admin_soft\templates\admin\edit_inline\stacked.html:32
+#: .\admin_soft\templates\admin\edit_inline\tabular.html:64
+msgid "View on site"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_list.html:111
+msgid "Filter"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_list_results.html:22
+msgid "Remove from sorting"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_list_results.html:24
+#, python-format
+msgid "Sorting priority: %(priority_number)s"
+msgstr ""
+
+#: .\admin_soft\templates\admin\change_list_results.html:26
+msgid "Toggle sorting"
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:42
+#: .\admin_soft\templates\admin\submit_line.html:32
+msgid "Delete"
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:58
+#, python-format
+msgid ""
+"\n"
+"                                    Deleting the %(object_name)s "
+"'%(escaped_object)s' would result in deleting\n"
+"                                    related objects, but your account "
+"doesn't have permission to delete the\n"
+"                                    following types of objects:\n"
+"                                "
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:76
+#, python-format
+msgid ""
+"\n"
+"                                    Deleting the %(object_name)s ' "
+"%(escaped_object)s' would require deleting\n"
+"                                    the following protected related "
+"objects:\n"
+"                                "
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:93
+#, python-format
+msgid ""
+"\n"
+"                                    Are you sure you want to delete the "
+"%(object_name)s \"%(escaped_object)s\"?\n"
+"                                    All of the following related items will "
+"be deleted:\n"
+"                                "
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:107
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:107
+msgid "Objects"
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:128
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:126
+msgid "Yes, I'm sure"
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_confirmation.html:130
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:128
+msgid "No, take me back"
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:42
+msgid "Delete multiple objects"
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:58
+#, python-format
+msgid ""
+"\n"
+"                                        Deleting the selected "
+"%(objects_name)s would result in deleting related\n"
+"                                        objects, but your account doesn't "
+"have permission to delete the following\n"
+"                                        types of objects:\n"
+"                                    "
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:76
+#, python-format
+msgid ""
+"\n"
+"                                        Deleting the selected "
+"%(objects_name)s would require deleting the\n"
+"                                        following protected related "
+"objects:\n"
+"                                    "
+msgstr ""
+
+#: .\admin_soft\templates\admin\delete_selected_confirmation.html:93
+#, python-format
+msgid ""
+"\n"
+"                                        Are you sure you want to delete the "
+"selected %(objects_name)s? All of the\n"
+"                                        following objects and their related "
+"items will be deleted:\n"
+"                                    "
+msgstr ""
+
+#: .\admin_soft\templates\admin\edit_inline\stacked.html:29
+#: .\admin_soft\templates\admin\edit_inline\tabular.html:60
+msgid "Change"
+msgstr ""
+
+#: .\admin_soft\templates\admin\edit_inline\stacked.html:29
+#: .\admin_soft\templates\admin\edit_inline\tabular.html:60
+msgid "View"
+msgstr ""
+
+#: .\admin_soft\templates\admin\edit_inline\tabular.html:37
+msgid "Delete?"
+msgstr ""
+
+#: .\admin_soft\templates\admin\filter.html:9
+#, python-format
+msgid " By %(filter_title)s "
+msgstr ""
+
+#: .\admin_soft\templates\admin\includes\object_delete_summary.html:5
+msgid "Summary"
+msgstr ""
+
+#: .\admin_soft\templates\admin\index.html:559
+msgid "Recent actions"
+msgstr ""
+
+#: .\admin_soft\templates\admin\index.html:562
+msgid "My actions"
+msgstr ""
+
+#: .\admin_soft\templates\admin\index.html:588
+msgid "Unknown content"
+msgstr ""
+
+#: .\admin_soft\templates\admin\index.html:596
+msgid "None available"
+msgstr ""
+
+#: .\admin_soft\templates\admin\invalid_setup.html:35
+#: .\admin_soft\templates\admin\invalid_setup.html:56
+msgid ""
+"Something's wrong with your database installation. Make sure the appropriate "
+"database tables have been created, and make sure the database is readable by "
+"the appropriate user."
+msgstr ""
+
+#: .\admin_soft\templates\admin\object_history.html:53
+msgid "User"
+msgstr ""
+
+#: .\admin_soft\templates\admin\object_history.html:54
+msgid "Action"
+msgstr ""
+
+#: .\admin_soft\templates\admin\object_history.html:55
+msgid "Date/time"
+msgstr ""
+
+#: .\admin_soft\templates\admin\object_history.html:71
+msgid ""
+"This object doesn't have a change history. It probably wasn't added via this "
+"admin site."
+msgstr ""
+
+#: .\admin_soft\templates\admin\pagination.html:35
+#: .\admin_soft\templates\admin\search_form.html:37
+msgid "Show all"
+msgstr ""
+
+#: .\admin_soft\templates\admin\pagination.html:51
+#: .\admin_soft\templates\admin\submit_line.html:11
+msgid "Save"
+msgstr ""
+
+#: .\admin_soft\templates\admin\search_form.html:21
+msgid "Search"
+msgstr ""
+
+#: .\admin_soft\templates\admin\search_form.html:27
+#, python-format
+msgid ""
+"\n"
+"                                    %(counter)s result\n"
+"                                "
+msgid_plural ""
+"\n"
+"                                    %(counter)s results\n"
+"                                "
+msgstr[0] ""
+msgstr[1] ""
+
+#: .\admin_soft\templates\admin\search_form.html:33
+#, python-format
+msgid ""
+"\n"
+"                                    %(full_result_count)s total\n"
+"                                "
+msgstr ""
+
+#: .\admin_soft\templates\admin\submit_line.html:15
+msgid "Save as new"
+msgstr ""
+
+#: .\admin_soft\templates\admin\submit_line.html:19
+msgid "Save and add another"
+msgstr ""
+
+#: .\admin_soft\templates\admin\submit_line.html:23
+msgid "Save and continue editing"
+msgstr ""
+
+#: .\admin_soft\templates\admin\submit_line.html:23
+msgid "Save and view"
+msgstr ""
+
+#: .\admin_soft\templates\admin\submit_line.html:27
+msgid "Close"
+msgstr ""
+
+#: .\admin_soft\templates\includes\sidebar.html:89
+msgid "Dashboard"
+msgstr ""
+
+#: .\admin_soft\templates\registration\logged_out.html:14
+msgid "Log in"
+msgstr ""
+
+#: .\admin_soft\templates\registration\logged_out.html:15
+#: .\admin_soft\templates\registration\logged_out.html:32
+msgid "Thanks for spending some quality time with the Web site today."
+msgstr ""
+
+#: .\admin_soft\templates\registration\logged_out.html:19
+msgid "Log in again"
+msgstr ""
+
+#: .\admin_soft\templates\registration\password_change_done.html:8
+msgid "Documentation"
+msgstr ""
+
+#: .\admin_soft\templates\registration\password_change_done.html:12
+msgid "Log out"
+msgstr ""
+
+#: .\admin_soft\templates\registration\password_change_done.html:33
+#: .\admin_soft\templates\registration\password_change_form.html:23
+msgid "Password change"
+msgstr ""
+
+#: .\admin_soft\templates\registration\password_change_done.html:47
+#: .\admin_soft\templates\registration\password_change_done.html:61
+msgid "Your password was changed."
+msgstr ""
+
+#: .\admin_soft\templates\registration\password_change_form.html:38
+msgid ""
+"Please enter your old password, for security's sake, and then enter your new "
+"password twice so we can verify you typed it in correctly."
+msgstr ""
+
+#: .\authentication\api\serializers.py:30
+msgid "This email is already in use."
+msgstr ""
+
+#: .\authentication\api\serializers.py:43
+#: .\authentication\api\serializers.py:74
+msgid "This company is not active."
+msgstr ""
+
+#: .\authentication\api\views.py:106
+msgid "Email and password are required."
+msgstr ""
+
+#: .\authentication\api\views.py:145
+msgid "Invalid credentials."
+msgstr ""
+
+#: .\authentication\models.py:30
+msgid "Company Name"
+msgstr ""
+
+#: .\authentication\models.py:31
+msgid "Enter the official name of the company (must not contain numbers)."
+msgstr ""
+
+#: .\authentication\models.py:34 .\authentication\validators.py:10
+msgid "Company name must not contain numbers."
+msgstr ""
+
+#: .\authentication\models.py:41
+msgid "Company Address"
+msgstr ""
+
+#: .\authentication\models.py:42
+msgid "Enter the full address of the company."
+msgstr ""
+
+#: .\authentication\models.py:46
+msgid "Is Active?"
+msgstr ""
+
+#: .\authentication\models.py:47
+msgid "Indicates whether the company is currently active."
+msgstr ""
+
+#: .\authentication\models.py:53
+msgid "Subscription Plan"
+msgstr ""
+
+#: .\authentication\models.py:54
+msgid "Select the subscription plan for the company."
+msgstr ""
+
+#: .\authentication\models.py:58
+msgid "Employee Limit"
+msgstr ""
+
+#: .\authentication\models.py:59
+msgid "Maximum number of employees allowed in this company."
+msgstr ""
+
+#: .\authentication\models.py:65
+msgid "Company Logo"
+msgstr ""
+
+#: .\authentication\models.py:66
+msgid "Upload the company's official logo."
+msgstr ""
+
+#: .\authentication\models.py:71
+msgid "Employee limit must be a positive number."
+msgstr ""
+
+#: .\authentication\models.py:80
+msgid "Address must not exceed 255 characters."
+msgstr ""
+
+#: .\authentication\models.py:82
+msgid "Active companies must have an address."
+msgstr ""
+
+#: .\authentication\validators.py:8
+msgid "Company name must be at least 3 characters long."
+msgstr ""

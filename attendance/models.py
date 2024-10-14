@@ -3,36 +3,60 @@ from django.conf import settings
 from authentication.models import CustomUser, Company 
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.core.exceptions import ValidationError
 
 class Employee(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employees', verbose_name=_("User"))  
-    employee_id = models.CharField(max_length=20, unique=True, verbose_name=_("Employee ID"))  
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='company_employees',
+        verbose_name=_("Company"),
+        null=True, blank=True,
+    )
+    employee_id = models.CharField(
+        max_length=20,
+        verbose_name=_("Employee ID"),
+    )
+    first_name = models.CharField(max_length=50, null=True, blank=True,  verbose_name=_("First Name"))
+    last_name = models.CharField(max_length=50,null=True, blank=True,  verbose_name=_("Last Name"))
+    full_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Full Name"), editable=False)
+    
     department = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Department name"))  
     position = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Position title"))  
     contact_number = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Contact number"))  
     date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of joining"))  
-
+    email = models.EmailField(max_length=255, null=True, blank=True, verbose_name=_("Email Address"))
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Date of Birth"))
+    date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of Joining"))
+ 
     class Meta:
         verbose_name = _("Employee")  
         verbose_name_plural = _("Employees")  
         ordering = ['date_of_joining']  
-
+        constraints = [
+            models.UniqueConstraint(fields=['company', 'employee_id'], name='unique_employee_per_company')
+        ]
     def save(self, *args, **kwargs):
-        # Check if user has a company
-        if self.user.company:
+        """
+        Save method that checks the company's employee limit before adding a new employee.
+        """
+        if self.company:  # Check if the employee has a company assigned
             # Count the current number of employees in the company
-            current_employee_count = self.user.company.employees.count()
-            max_employees_allowed = self.user.company.subscription.max_employees
+            current_employee_count = self.company.company_employees.count()
+            max_employees_allowed = self.company.subscription.max_employees
 
             # Check if the current number of employees exceeds the allowed limit
             if current_employee_count >= max_employees_allowed:
-                raise ValidationError(f"Cannot add more employees. The maximum limit of {max_employees_allowed} employees for this company's subscription has been reached.")
+                raise ValidationError(
+                    f"Cannot add more employees. The maximum limit of {max_employees_allowed} employees for this company's subscription has been reached."
+                )
         
-        super().save(*args, **kwargs)  # Call the original save method
+        # Call the original save method
+        super().save(*args, **kwargs)
 
         
     def __str__(self):
-        return f"{self.user.username} ({self.employee_id})"  
+        return f"({self.employee_id} {self.first_name})"  
 
     def clean(self):
         """Custom validation logic."""
@@ -104,10 +128,15 @@ class AttendanceLog(models.Model):
     ব্যবহারকারীর চেক ইন এবং চেক আউট তথ্য সংরক্ষণ করার জন্য উপস্থিতি লগ মডেল।
     """
     
-    employee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attendance_logs')
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='attendance_logs',
+        verbose_name=_("Employee")
+    )
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='attendance_logs',null=True)
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
-    timestamp = models.DateTimeField(default=timezone.now)
+    punch_datetime = models.DateTimeField(default=timezone.now, verbose_name=_("Date & Time of Punch"))
    
     STATUS_CHOICES = [
         ('IN', 'Check-In'),
@@ -115,9 +144,34 @@ class AttendanceLog(models.Model):
         ('BREAK_IN', 'Break-In'),
         ('BREAK_OUT', 'Break-Out'),
     ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    mode = models.CharField(max_length=10, choices=[('FP', 'Fingerprint'), ('CARD', 'Card'), ('PWD', 'Password'), ('GPS', 'GPS-based')],default='FP')
+    in_out_status = models.CharField(max_length=20, choices=STATUS_CHOICES,     default='IN', verbose_name=_("In/Out Status"))
+    VERIFICATION_CHOICES = [
+        ('FP', 'Fingerprint'),
+        ('FACE', 'Face'),
+        ('CARD', 'Card'),
+        ('PWD', 'Password'),
+        ('GPS', 'GPS'),
+        ('MANUAL', 'Manual'),
+    ]
+    verification_method = models.CharField(
+        max_length=10,
+        choices=VERIFICATION_CHOICES,
+        default='FP',
+        verbose_name=_("Verification Method")
+    )
 
+    punch_mode = models.CharField(
+        max_length=10,
+        choices=[('AUTO', 'Auto'), ('MANUAL', 'Manual')],
+        default='AUTO',
+        verbose_name=_("Punch Mode")
+    )
+    work_code = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("Work Code")
+    )
     locationName = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
@@ -131,9 +185,9 @@ class AttendanceLog(models.Model):
     class Meta:
         verbose_name = "Attendance Log"
         verbose_name_plural = "Attendance Logs"
-        ordering = ['-timestamp']  # Order by latest timestamp first
+        ordering = ['-punch_datetime']  # Order by latest timestamp first
         constraints = [
-            models.UniqueConstraint(fields=['employee', 'timestamp'], name='unique_attendance_log_per_user_per_day_per_checkin')
+            models.UniqueConstraint(fields=['employee', 'punch_datetime'], name='unique_attendance_log_per_user_per_day_per_checkin')
         ]
 
     def clean(self):
@@ -213,18 +267,43 @@ class Shift(models.Model):
         """
         return self.status == 'ACTIVE'
 
+class Workday(models.Model):
+    day = models.CharField(max_length=10, choices=[
+        ('MON', 'Monday'),
+        ('TUE', 'Tuesday'),
+        ('WED', 'Wednesday'),
+        ('THU', 'Thursday'),
+        ('FRI', 'Friday'),
+        ('SAT', 'Saturday'),
+        ('SUN', 'Sunday'),
+    ])
+
+    def __str__(self):
+        return self.day
 
 class Schedule(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Employee linked to the schedule
-    shift = models.ForeignKey(Shift, on_delete=models.CASCADE)  # The shift they are assigned to
-    workday = models.CharField(max_length=10, choices=[('MON', 'Monday'), ('TUE', 'Tuesday'), ('WED', 'Wednesday'), ('THU', 'Thursday'), ('FRI', 'Friday'), ('SAT', 'Saturday'), ('SUN', 'Sunday')])  # Workday
-
+    shift = models.ForeignKey('Shift', on_delete=models.CASCADE)  # The shift they are assigned to
+    workdays = models.ManyToManyField(Workday)  # Allow multiple workdays
+    company = models.ForeignKey(
+        Company, 
+        on_delete=models.CASCADE, 
+        related_name='schedules',  # Changed related_name to 'schedules'
+        null=True
+    )
     def __str__(self):
-        return f"{self.employee.user.username} - {self.shift.name} - {self.workday}"
+        # Using employee_id and position from Employee model
+        return f"{self.employee.employee_id} - {self.shift.name} - {', '.join([day.day for day in self.workdays.all()])}"
 
-
+class TemporaryShift(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
+    date = models.DateField()  # অস্থায়ী শিফটের নির্দিষ্ট তারিখ
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,related_name='temp_shifts')
+    
 class WorkHours(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Employee linked to the work hours
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True, blank=True)  # Linking work hours with company
     date = models.DateField()  # Date for which hours are calculated
     total_hours = models.DurationField()  # Total worked hours
     overtime_hours = models.DurationField(null=True, blank=True)  # Optional overtime hours
@@ -233,4 +312,13 @@ class WorkHours(models.Model):
         return f"{self.employee.user.username} - {self.date} - {self.total_hours}"      
 
 
+class Holiday(models.Model):
+    """
+    ছুটির দিনগুলি সংরক্ষণের জন্য Holiday মডেল।
+    """
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)  # কোম্পানিভিত্তিক ছুটি
+    date = models.DateField()  # ছুটির তারিখ
+    reason = models.CharField(max_length=255)  # ছুটির কারণ যেমন ঈদ, পুজা ইত্যাদি
 
+    def __str__(self):
+        return f"{self.reason} - {self.date}"

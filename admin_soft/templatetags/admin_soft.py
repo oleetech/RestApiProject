@@ -84,3 +84,4 @@ def sum_number(value, number):
 @register.filter
 def neg_num(value, number):
     return value - number
+

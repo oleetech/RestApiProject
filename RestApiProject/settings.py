@@ -73,7 +73,11 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'attendance', 'locale'),  # App-specific locale directory
 ]
 
-
+# Celery Configuration Options
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = None  # আমরা রেজাল্ট ব্যাকএন্ড ব্যবহার করছি না
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # CORS Middleware

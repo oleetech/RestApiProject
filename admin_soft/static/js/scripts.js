@@ -137,3 +137,44 @@ const r = document.querySelectorAll('input[type=text], input[type=email], input[
 for (var z = 0; z < r.length; z++) {
     r[z].classList.add('form-control');
 }
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all file input elements
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+
+    fileInputs.forEach(function(input) {
+        // Add the custom CSS class
+        input.classList.add('form-control');
+
+        // Update the appearance of the input when a file is selected
+        input.addEventListener('change', function() {
+            if (input.files.length > 0) {
+                // You can add additional logic here if needed
+            }
+        });
+    });
+});
+
+
+// Wait for the DOM content to load
+document.addEventListener('DOMContentLoaded', function() {
+    // Select the <select> element using its name attribute
+    const subscriptionSelect = document.querySelector('select[name="subscription"]');
+
+    // Check if the <select> element exists
+    if (subscriptionSelect) {
+        // Remove the 'related-widget-wrapper' class from its parent element
+        const parentWrapper = subscriptionSelect.closest('.related-widget-wrapper');
+        if (parentWrapper) {
+            parentWrapper.classList.remove('related-widget-wrapper');
+        }
+
+        // Add 'form-group mb-2' class to the parent element
+        if (parentWrapper) {
+            parentWrapper.classList.add('form-group', 'mb-2');
+        }
+    }
+});
+
+

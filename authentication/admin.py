@@ -55,7 +55,23 @@ from reportlab.lib.styles import getSampleStyleSheet
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ('name', 'address')  # Fields to display in the list view
     search_fields = ('name',)  # Searchable fields in the admin interface
+    # Define fieldsets for detail view and editing
+    fieldsets = (
+        ("Company Information", {
+            'fields': ('name', 'address', 'logo','employee_limit')
+        }),
+        ('Limits', {
+            'fields': ('is_active', 'subscription',),
+            'classes': ('wide',)  # Make this section collapsible
+        }),
+    )
 
+    # Customizing the form for adding and changing Company
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        # Custom logic can be added here if necessary
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        
     actions = ['export_as_pdf']  # কাস্টম অ্যাকশন যুক্ত করা হচ্ছে
     def export_as_pdf(self, request, queryset):
         # PDF রেসপন্স তৈরি করা

@@ -4,8 +4,45 @@ from authentication.models import CustomUser, Company
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
+from django.template.defaultfilters import filesizeformat
 
 class Employee(models.Model):
+
+    GENDER_CHOICES = (
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    )
+
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A+'),
+        ('A-', 'A-'),
+        ('B+', 'B+'),
+        ('B-', 'B-'),
+        ('AB+', 'AB+'),
+        ('AB-', 'AB-'),
+        ('O+', 'O+'),
+        ('O-', 'O-'),
+    ]
+
+    RELIGION_CHOICES = [
+        ('Christianity', 'Christianity'),
+        ('Islam', 'Islam'),
+        ('Hinduism', 'Hinduism'),
+        ('Buddhism', 'Buddhism'),
+        ('Sikhism', 'Sikhism'),
+        ('Judaism', 'Judaism'),
+        ('Other', 'Other'),
+    ]
+
+    MARITAL_STATUS_CHOICES = [
+        ('Single', 'Single'),
+        ('Married', 'Married'),
+        ('Divorced', 'Divorced'),
+        ('Widowed', 'Widowed'),
+    ]
+
     company = models.ForeignKey(
         Company,
         on_delete=models.CASCADE,
@@ -20,21 +57,43 @@ class Employee(models.Model):
     first_name = models.CharField(max_length=50, null=True, blank=True,  verbose_name=_("First Name"))
     last_name = models.CharField(max_length=50,null=True, blank=True,  verbose_name=_("Last Name"))
     full_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Full Name"), editable=False)
-    
+
+
     department = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Department name"))  
     position = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Position title"))  
     contact_number = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Contact number"))  
+
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES,default="M")
+    bloodGroup = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES,blank=True, null=True)
+    religion = models.CharField(max_length=20, choices=RELIGION_CHOICES,blank=True, null=True)
+    maritalStatus = models.CharField(max_length=10, choices=MARITAL_STATUS_CHOICES,blank=True, null=True)    
     date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of joining"))  
     email = models.EmailField(max_length=255, null=True, blank=True, verbose_name=_("Email Address"))
     date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Date of Birth"))
-    date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of Joining"))
  
     class Meta:
         verbose_name = _("Employee")  
         verbose_name_plural = _("Employees")  
         ordering = ['date_of_joining']  
         constraints = [
-            models.UniqueConstraint(fields=['company', 'employee_id'], name='unique_employee_per_company')
+            # Unique constraint per company for employee ID
+            models.UniqueConstraint(fields=['company', 'employee_id'], name='unique_employee_per_company'),
+            # Ensure unique contact number
+            models.UniqueConstraint(fields=['contact_number'], name='unique_contact_number'),
+            # Ensure unique email
+            models.UniqueConstraint(fields=['email'], name='unique_email'),
+            # Ensure date of birth is before the date of joining
+            models.CheckConstraint(check=models.Q(date_of_birth__lt=models.F('date_of_joining')), name='check_birth_before_joining'),
+            # Ensure employee ID is alphanumeric
+            models.CheckConstraint(check=models.Q(employee_id__regex=r'^[a-zA-Z0-9]+$'), name='check_employee_id_alphanumeric'),
+            # Ensure contact number is numeric
+            models.CheckConstraint(check=models.Q(contact_number__regex=r'^[0-9]+$'), name='check_contact_number_numeric'),
+            # Ensure email contains "@" symbol
+            models.CheckConstraint(check=models.Q(email__contains='@'), name='check_valid_email'),
+            # Ensure date of birth is after a reasonable minimum date (e.g., 1900-01-01)
+            models.CheckConstraint(check=models.Q(date_of_birth__gt='1900-01-01'), name='check_valid_birth_date'),
+            # Ensure the date of joining is not in the future
+            models.CheckConstraint(check=models.Q(date_of_joining__lte=models.functions.Now()), name='check_valid_joining_date'),
         ]
     def save(self, *args, **kwargs):
         """
@@ -59,7 +118,16 @@ class Employee(models.Model):
         return f"({self.employee_id} {self.first_name})"  
 
     def clean(self):
-        """Custom validation logic."""
+        super().clean()
+
+        # Ensure either first or last name is provided
+        if not self.first_name and not self.last_name:
+            raise ValidationError(_("At least one of First Name or Last Name must be provided."))
+        # Validate email format (simple regex)
+        if self.email and '@' not in self.email:
+            raise ValidationError(_("Email address must contain a valid '@' symbol."))
+
+
         if self.contact_number and not self.contact_number.isdigit():
             raise ValidationError(_("Contact number must be numeric."))  
         if len(self.contact_number) < 10 or len(self.contact_number) > 15:
@@ -73,20 +141,51 @@ class Employee(models.Model):
         """Return a string representation of department and position."""
         return f"{self.position} in {self.department}" if self.department and self.position else _("No specific department or position assigned.") 
 
+
+class EmployeeDocument(models.Model):
+    EMPLOYEE_DOCUMENT_TYPES = (
+        ('Resume', 'Resume'),
+        ('Contract', 'Contract'),
+        ('ID Card', 'ID Card'),
+        ('Other', 'Other'),
+    )
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Associate the document with an employee (User model in this case)
+    document_name = models.CharField(max_length=100)
+    document_type = models.CharField(max_length=20, choices=EMPLOYEE_DOCUMENT_TYPES)
+    upload_date = models.DateTimeField(auto_now_add=True)
+    document_file = models.FileField(upload_to='employee_documents/', validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'jpg', 'png'])])
+ 
+    class Meta:
+        verbose_name = _("Employee Document")
+        verbose_name_plural = _("Employee Documents")
+        ordering = ['upload_date']  # Default ordering by upload date
+        
+    def clean(self):
+        super().clean()
+        # File size validation (e.g., 5MB)
+        if self.document_file.size > 5 * 1024 * 1024:  # 5MB
+            raise ValidationError(_("File size should not exceed 5MB. Your file is %s") % filesizeformat(self.document_file.size))
+
+
 class Device(models.Model):
     device_id = models.CharField(max_length=50, unique=True)  
     location = models.CharField(max_length=100)  
-    description = models.TextField(null=True, blank=True)  
+    description = models.CharField(max_length=255,null=True, blank=True)  
     ip_address = models.GenericIPAddressField(null=True, blank=True)  
     last_sync_time = models.DateTimeField(null=True, blank=True)  
     serial_number = models.CharField(max_length=255, unique=True,null=True)  
     company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True)  
+    port = models.IntegerField(default=4370)  # মেশিনের পোর্ট
 
     class Meta:
         verbose_name = "Device"
         verbose_name_plural = "Devices"
         ordering = ['-last_sync_time']  # Order devices by last sync time (latest first)
-
+        constraints = [
+            models.CheckConstraint(check=models.Q(port__gte=1, port__lte=65535), name='check_valid_port_range'),
+            models.UniqueConstraint(fields=['company', 'ip_address'], name='unique_ip_per_company')
+        ]
     def __str__(self):
         """
         Return a string representation of the device showing its ID and location.
@@ -94,14 +193,13 @@ class Device(models.Model):
         return f"{self.device_id} - {self.location}"
 
     def clean(self):
-        """
-        Custom validation logic to ensure the device has a valid serial number format.
-        """
+        super().clean()
         if len(self.serial_number) < 10:
             raise ValidationError("Serial number must be at least 10 characters long.")
         if not self.ip_address:
             raise ValidationError("Device must have a valid IP address.")
-
+        if not (1 <= self.port <= 65535):
+            raise ValidationError(_("Port number must be between 1 and 65535."))
     @property
     def is_synced(self):
         """
@@ -172,6 +270,8 @@ class AttendanceLog(models.Model):
         blank=True,
         verbose_name=_("Work Code")
     )
+    sync = models.BooleanField(default=False)
+
     locationName = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)

@@ -82,6 +82,19 @@
         <div class="col-12 mb-4">
             <div class="card">
                 <div class="card-body">
+
+                    <!-- Display error messages if any -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <strong>Please fix the following errors:</strong>
+                            <ul>
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
                     <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}"
                           method="post" id="{{ opts.model_name }}_form" novalidate>
 
@@ -121,6 +134,7 @@
 
                         </div>
                     </form>
+                    <!-- Error handling outside of the form but still within the card body -->
                 </div>
             </div>
         </div>

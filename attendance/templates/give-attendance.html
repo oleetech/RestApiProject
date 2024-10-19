@@ -1,0 +1,187 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+    /* ম্যাপের জন্য CSS */
+    #map {
+        height: 200px; /* Height of the map */
+        width: 100%; /* Width of the map */
+        filter: blur(10px); /* ম্যাপের জন্য ব্লার ইফেক্ট */
+        transition: filter 0.3s ease; /* ব্লার ইফেক্ট ট্রানজিশন */
+    }
+    /* লোকেশন ইনফরমেশন দেখানোর জন্য */
+    #location-info {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 5px; /* গোলাকার কোণ */
+    }
+    /* কার্ডের স্টাইল */
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px; /* কার্ডের ভিতরে প্যাডিং */
+    }
+    .btn-group {
+        display: flex; /* বাটনগুলোকে এক লাইনে রাখার জন্য */
+        justify-content: space-between; /* বাটনগুলোর মধ্যে ফাঁকা জায়গা রাখার জন্য */
+        margin-bottom: 15px; /* বাটন গ্রুপের নিচে কিছু ফাঁকা জায়গা */
+    }
+</style>
+{% endblock extrastyle %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+        <h3 class="mt-3">আপনার বর্তমান লোকেশন দেখতে বাটনে ক্লিক করুন</h3>
+
+        <div class="row">
+            <!-- Location Card -->
+            <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>লোকেশন ইনফরমেশন</h5>
+
+                        <div class="btn-group">
+                            <!-- লোকেশন দেখানোর বাটন -->
+                            <button class="btn btn-primary" onclick="showLocation()">লোকেশন দেখান</button>
+                            <!-- Google Maps এ যাওয়ার বাটন -->
+                            <button id="google-maps-button" class="btn btn-primary" style="display: none;">
+                                <i class="fa fa-map-marker" aria-hidden="true"></i> Google Maps এ যান
+                            </button>
+                        </div>
+
+                        <h5>ম্যাপ</h5>
+                        <!-- ম্যাপের জন্য div (responsive) -->
+                        <div id="map" class="mt-3"></div>
+                        
+                        <div id="location-info" class="mt-3">
+                            <p>Latitude এবং Longitude এখানে শো হবে</p>
+                        </div>
+
+                        <!-- ফর্ম সংযোজন -->
+                        <form id="location-form" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+                            <input type="hidden" id="location-name" name="location_name">
+                            <button type="submit" class="btn btn-success mt-2" style="display: none;" id="submit-button">সাবমিট করুন</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% include "includes/footer.html" %}
+    </div>
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block scripts %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<script>
+    // ম্যাপের ভেরিয়েবল তৈরি
+    var map = L.map('map').setView([51.505, -0.09], 13); // প্রাথমিকভাবে মানচিত্র দেখানো
+
+    // ম্যাপের লেয়ার যোগ করা
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var googleMapsURL = ""; // Google Maps URL সংরক্ষণের জন্য ভ্যারিয়েবল
+
+    function showLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+
+                // Update map
+                map.setView([lat, lon], 13);
+                L.marker([lat, lon]).addTo(map)
+                    .bindPopup("আপনার বর্তমান লোকেশন")
+                    .openPopup();
+
+                var locationInfoDiv = document.getElementById('location-info');
+                locationInfoDiv.innerHTML = `
+                    <p><strong>Latitude:</strong> ${lat}</p>
+                    <p><strong>Longitude:</strong> ${lon}</p>
+                `;
+
+                // Nominatim API to get location name
+                fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                    .then(response => response.json())
+                    .then(data => {
+                        var locationName = data.display_name;
+                        locationInfoDiv.innerHTML += `<p><strong>লোকেশন:</strong> ${locationName}</p>`;
+
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lon;
+                        document.getElementById('location-name').value = locationName;
+                        document.getElementById('submit-button').style.display = "inline-block";
+                    })
+                    .catch(error => {
+                        console.error("Error fetching location name:", error);
+                        locationInfoDiv.innerHTML += `<p>লোকেশন নাম পাওয়া যায়নি।</p>`;
+                    });
+
+                googleMapsURL = `https://www.google.com/maps?q=${lat},${lon}`;
+                document.getElementById("google-maps-button").style.display = "inline-block";
+                document.getElementById('map').style.filter = "none";
+            },
+            function(error) {
+                // Default fallback location (example: Dhaka, Bangladesh)
+                var defaultLat = 23.8103;
+                var defaultLon = 90.4125;
+                var defaultLocationName = "ঢাকা, বাংলাদেশ";
+
+                alert("অনুগ্রহ করে আপনার ডিভাইস লোকেশন (GPS) চালু করুন এবং পুনরায় চেষ্টা করুন!");
+
+                // Update map to default location
+                map.setView([defaultLat, defaultLon], 13);
+                L.marker([defaultLat, defaultLon]).addTo(map)
+                    .bindPopup("ডিফল্ট লোকেশন: ঢাকা, বাংলাদেশ")
+                    .openPopup();
+
+                var locationInfoDiv = document.getElementById('location-info');
+                locationInfoDiv.innerHTML = `
+                    <p><strong>Latitude:</strong> ${defaultLat}</p>
+                    <p><strong>Longitude:</strong> ${defaultLon}</p>
+                    <p><strong>লোকেশন:</strong> ${defaultLocationName}</p>
+                `;
+
+                // Update hidden form fields
+                document.getElementById('latitude').value = defaultLat;
+                document.getElementById('longitude').value = defaultLon;
+                document.getElementById('location-name').value = defaultLocationName;
+                document.getElementById('submit-button').style.display = "inline-block";
+
+                googleMapsURL = `https://www.google.com/maps?q=${defaultLat},${defaultLon}`;
+                document.getElementById("google-maps-button").style.display = "inline-block";
+                document.getElementById('map').style.filter = "none";
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        alert("Geolocation API আপনার ব্রাউজারে সমর্থিত নয়!");
+    }
+}
+
+  // Google Maps এ যাওয়ার জন্য বাটন ক্লিক ইভেন্ট
+    document.getElementById('google-maps-button').addEventListener('click', function () {
+        window.open(googleMapsURL, '_blank');
+    });
+</script>
+
+{% endblock scripts %}

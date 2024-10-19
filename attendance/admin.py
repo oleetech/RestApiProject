@@ -4,36 +4,36 @@ from django.urls import path
 from django.urls import reverse
 from django.utils.html import format_html
 from .views import schedule_report_view  # Custom view import করুন
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 
 class EmployeeDocumentInline(admin.TabularInline):
-    """
-    Inline admin for EmployeeDocument model to display documents related to an employee.
-    """
     model = EmployeeDocument
-    extra = 1  # Number of empty forms to display for adding new documents
+    extra = 1 
     fields = ('document_name', 'document_type', 'document_file')
-    readonly_fields = ('upload_date',)  # Make upload_date read-only in the inline form
-
-# Registering Employee model in the admin
+    readonly_fields = ('upload_date',)  
+from .forms import EmployeeForm
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    """
-    Admin interface for Employee model.
-    """
+    form = EmployeeForm  
+
+    def get_form(self, request, obj=None, **kwargs):
+        # Pass the request to the form
+        form = super().get_form(request, obj, **kwargs)
+        form.request = request  # Attach the request object to the form
+        return form
+            
     list_display = ('id', 'employee_id', 'company', 'department', 'position', 'contact_number', 'date_of_joining', 'first_name')
     search_fields = ('employee_id', 'department', 'position', 'company__name')
     list_filter = ('department', 'position', 'date_of_joining', 'company')
-    
-    # Exclude the company field from the form
     exclude = ('company',)  
     
-    inlines = [EmployeeDocumentInline]  # Add the inline to the Employee admin
-    # Define fieldsets for the admin form
+    inlines = [EmployeeDocumentInline]  
     fieldsets = (
-        (None, {  # First fieldset with no title
+        (None, {  
             'fields': ('employee_id', 'first_name', 'last_name',  'contact_number', 'date_of_joining')
         }),
-        ('Details', {  # Second fieldset with a title
+        ('Details', {  
             'fields': ('department', 'position', 'gender', 'bloodGroup', 'religion', 'maritalStatus', 'date_of_birth', 'email')
         }),
 
@@ -42,11 +42,14 @@ class EmployeeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
-            return qs  # সুপারইউজার হলে সব ডিভাইস দেখান
-        return qs.filter(company=request.user.company)  # অন্য ব্যবহারকারীর জন্য শুধুমাত্র তাদের কোম্পানির ডিভাইস দেখান
+            return qs  
+        return qs.filter(company=request.user.company) 
 
     def save_model(self, request, obj, form, change):
-        if not obj.company:  
+        if not obj.company:
+            if not request.user.company:
+                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                raise ValidationError("Company must be set for the user.")
             obj.company = request.user.company 
         super().save_model(request, obj, form, change)
 
@@ -76,9 +79,11 @@ class DeviceAdmin(admin.ModelAdmin):
 
     exclude = ('company',)  
     def save_model(self, request, obj, form, change):
-        if change:
-            obj.company = request.user.company  # Set the company to the logged-in user's company
-        super().save_model(request, obj, form, change)  
+        if not obj.company:  
+            if not request.user.company:
+                raise ValidationError("আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+            obj.company = request.user.company 
+        super().save_model(request, obj, form, change)
 
 
     def get_queryset(self, request):

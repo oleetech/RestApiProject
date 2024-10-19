@@ -34,6 +34,8 @@ urlpatterns = [
 
     path('auth-api/', include('authentication.api.urls')),
     path('attendance-api/', include('attendance.api.urls')),
+    path('attendance/', include('attendance.urls')),
+
     path('set_language/', include('django.conf.urls.i18n')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

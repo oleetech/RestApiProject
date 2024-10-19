@@ -92,25 +92,28 @@ class Employee(models.Model):
             models.CheckConstraint(check=models.Q(email__contains='@'), name='check_valid_email'),
             # Ensure date of birth is after a reasonable minimum date (e.g., 1900-01-01)
             models.CheckConstraint(check=models.Q(date_of_birth__gt='1900-01-01'), name='check_valid_birth_date'),
-            # Ensure the date of joining is not in the future
-            models.CheckConstraint(check=models.Q(date_of_joining__lte=models.functions.Now()), name='check_valid_joining_date'),
+            # এই কনস্ট্রেইন্টটি সরিয়ে নিন
+            # models.CheckConstraint(check=models.Q(date_of_joining__lte=models.functions.Now()), name='check_valid_joining_date'),
         ]
+
     def save(self, *args, **kwargs):
-        """
-        Save method that checks the company's employee limit before adding a new employee.
-        """
-        if self.company:  # Check if the employee has a company assigned
-            # Count the current number of employees in the company
+        request = kwargs.pop('request', None)
+        
+        if request and not self.company:
+            if not request.user.company:
+                raise ValidationError("আপনার ইউজার প্রোফাইলে কোনো কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+            else:
+                self.company = request.user.company
+
+        if self.company:
             current_employee_count = self.company.company_employees.count()
             max_employees_allowed = self.company.subscription.max_employees
-
-            # Check if the current number of employees exceeds the allowed limit
+            
             if current_employee_count >= max_employees_allowed:
                 raise ValidationError(
                     f"Cannot add more employees. The maximum limit of {max_employees_allowed} employees for this company's subscription has been reached."
                 )
-        
-        # Call the original save method
+
         super().save(*args, **kwargs)
 
         
@@ -119,19 +122,19 @@ class Employee(models.Model):
 
     def clean(self):
         super().clean()
-
-        # Ensure either first or last name is provided
+        
         if not self.first_name and not self.last_name:
             raise ValidationError(_("At least one of First Name or Last Name must be provided."))
-        # Validate email format (simple regex)
+        
         if self.email and '@' not in self.email:
             raise ValidationError(_("Email address must contain a valid '@' symbol."))
 
-
         if self.contact_number and not self.contact_number.isdigit():
-            raise ValidationError(_("Contact number must be numeric."))  
-        if len(self.contact_number) < 10 or len(self.contact_number) > 15:
-            raise ValidationError(_("Contact number must be between 10 and 15 digits."))  
+            self.add_error('contact_number', _("Contact number must be numeric."))
+            
+        if self.contact_number and (len(self.contact_number) < 10 or len(self.contact_number) > 15):
+            self.add_error('contact_number', _("Contact number must be between 10 and 15 digits."))
+
     @property
     def full_name(self):
         """Return the full name of the employee if user has first and last name."""

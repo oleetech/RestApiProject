@@ -6,3 +6,10 @@ from django.shortcuts import render
 def schedule_report_view(request):
     # এই ভিউতে আপনি কাস্টম ডাটা প্রক্রিয়া করতে পারেন
     return render(request, 'admin/schedule_report.html', context={})
+
+
+
+# View to display the give-attendance.html template
+def give_attendance_view(request):
+    # Rendering the give-attendance.html template
+    return render(request, 'give-attendance.html')

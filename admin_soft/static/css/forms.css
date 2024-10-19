@@ -557,3 +557,15 @@ form .related-widget-wrapper ul {
     margin-bottom: 0 !important;
     padding: 12px;
 }
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}

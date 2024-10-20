@@ -1,0 +1,101 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+    /* Card styling */
+    .card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
+
+    /* Ensure the form fields are aligned in two columns */
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .form-column {
+        flex: 0 0 50%; /* Make each form field take 50% width for two columns */
+        padding: 10px;
+    }
+
+    /* For smaller screens, make it a single column */
+    @media (max-width: 768px) {
+        .form-column {
+            flex: 0 0 100%;
+        }
+    }
+
+    /* Remove ul and li styling */
+    .message-list {
+        list-style-type: none;  /* Remove bullet points */
+        padding: 0;  /* Remove default padding */
+        margin: 0;   /* Remove default margin */
+    }
+
+    .message-list li {
+        margin-bottom: 10px;  /* Add spacing between messages */
+    }
+</style>
+{% endblock extrastyle %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <!-- Card layout for the form -->
+                <div class="card">
+                    <h2 class="card-title">Update Profile</h2>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-column">
+                                {{ form.username.label_tag }}  <!-- Field label -->
+                                {{ form.username }}  <!-- Field input -->
+                            </div>
+                            <div class="form-column">
+                                {{ form.email.label_tag }}
+                                {{ form.email }}
+                            </div>
+                            <div class="form-column">
+                                {{ form.mobileNo.label_tag }}
+                                {{ form.mobileNo }}
+                            </div>
+                            <div class="form-column">
+                                {{ form.company.label_tag }}
+                                {{ form.company }}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
+                    </form>
+
+                    {% if messages %}
+                        <ul class="message-list mt-3">
+                            {% for message in messages %}
+                                <li class="alert alert-{{ message.tags }}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% include "includes/footer.html" %}
+    </div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    // Auto-hide messages after 5 seconds
+    setTimeout(function() {
+        var messages = document.querySelectorAll('.alert');
+        messages.forEach(function(message) {
+            message.style.display = 'none';
+        });
+    }, 5000); // 5000 ms = 5 seconds
+</script>
+{% endblock scripts %}

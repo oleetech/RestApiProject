@@ -315,19 +315,70 @@ class HolidayAdmin(admin.ModelAdmin):
     list_display = ('company', 'date', 'reason')
     search_fields = ('company__name', 'reason')
     list_filter = ('company', 'date')
-
-    # ফর্ম থেকে company ফিল্ড হাইড করার জন্য exclude ব্যবহার করা হচ্ছে
-    exclude = ('company',)  # company ফিল্ডটি ফর্মে দেখানো হবে না
+    exclude = ('company',)  # Hide company field in the form
 
     def save_model(self, request, obj, form, change):
-
-        if  change:  
-            obj.company = request.user.company  # লগইনকৃত ইউজারের কোম্পানি ডিফল্টভাবে সেট করা হচ্ছে
+        # Check if the object has a company
+        if not obj.company:
+            # Check if the user has a company
+            if not hasattr(request.user, 'company') or not request.user.company:
+                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                raise ValidationError("Company must be set for the user.")
+            # Assign the user's company to the Holiday object
+            obj.company = request.user.company
         super().save_model(request, obj, form, change)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
-            return qs  # সুপারইউজার হলে সব ডিভাইস দেখান
-        return qs.filter(company=request.user.company)  # অন্য ব্যবহারকারীর জন্য শুধুমাত্র তাদের কোম্পানির ডিভাইস দেখান
-            
+            return qs  # Show all holidays for superuser
+        return qs.filter(company=request.user.company) 
+    
+from .models import Department, Notice
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'company')
+    search_fields = ('name', 'company__name')
+    list_filter = ('company',)
+    exclude = ('company',)  
+    def save_model(self, request, obj, form, change):
+        # Check if the object has a company
+        if not obj.company:
+            # Check if the user has a company
+            if not hasattr(request.user, 'company') or not request.user.company:
+                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                raise ValidationError("Company must be set for the user.")
+            # Assign the user's company to the Holiday object
+            obj.company = request.user.company
+        super().save_model(request, obj, form, change)    
+        
+from .forms import NoticeForm    
+@admin.register(Notice)
+class NoticeAdmin(admin.ModelAdmin):
+    list_display = ('title', 'notice_type', 'department', 'created_by', 'created_at')
+    search_fields = ('title', 'content', 'company__name', 'department__name')
+    list_filter = ('notice_type', 'department', 'created_at')
+    readonly_fields = ('created_at',)
+    exclude = ('company',)
+
+    # Use the custom form
+    form = NoticeForm
+
+    def get_form(self, request, obj=None, **kwargs):
+        # Use the custom form and pass the user instance to it
+        kwargs['form'] = NoticeForm
+        form = super(NoticeAdmin, self).get_form(request, obj, **kwargs)
+        form.user = request.user  # Pass the request user to the form instance
+        return form
+
+    def save_model(self, request, obj, form, change):
+        # Assign the user's company to the Notice object if not already set
+        if not obj.company:
+            if not hasattr(request.user, 'company') or not request.user.company:
+                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                raise ValidationError("Company must be set for the user.")
+            obj.company = request.user.company
+
+        obj.created_by = request.user
+        super().save_model(request, obj, form, change)

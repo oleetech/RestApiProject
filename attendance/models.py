@@ -6,7 +6,20 @@ from django.utils.translation import gettext as _
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.template.defaultfilters import filesizeformat
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
 
+
+class Department(models.Model):
+    name = models.CharField(max_length=255)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='departments')
+
+    class Meta:
+        unique_together = ('name', 'company')  # Ensures each department name is unique within a company
+
+    def __str__(self):
+        return f"{self.name} - {self.company.name}"
+    
 class Employee(models.Model):
 
     GENDER_CHOICES = (
@@ -153,7 +166,7 @@ class EmployeeDocument(models.Model):
         ('Other', 'Other'),
     )
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Associate the document with an employee (User model in this case)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True,default=None)  
     document_name = models.CharField(max_length=100)
     document_type = models.CharField(max_length=20, choices=EMPLOYEE_DOCUMENT_TYPES)
     upload_date = models.DateTimeField(auto_now_add=True)
@@ -225,16 +238,12 @@ class Device(models.Model):
 
         
 class AttendanceLog(models.Model):
+    
     """
     ব্যবহারকারীর চেক ইন এবং চেক আউট তথ্য সংরক্ষণ করার জন্য উপস্থিতি লগ মডেল।
     """
     
-    employee = models.ForeignKey(
-        Employee,
-        on_delete=models.CASCADE,
-        related_name='attendance_logs',
-        verbose_name=_("Employee")
-    )
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True,default=None)  
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='attendance_logs',null=True)
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
     punch_datetime = models.DateTimeField(default=timezone.now, verbose_name=_("Date & Time of Punch"))
@@ -385,8 +394,8 @@ class Workday(models.Model):
         return self.day
 
 class Schedule(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Employee linked to the schedule
-    shift = models.ForeignKey('Shift', on_delete=models.CASCADE)  # The shift they are assigned to
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,default=None,blank=True,null=True)  # Employee linked to the schedule
+    shift = models.ForeignKey('Shift', on_delete=models.CASCADE,blank=True,null=True,default=None)  # The shift they are assigned to
     workdays = models.ManyToManyField(Workday)  # Allow multiple workdays
     company = models.ForeignKey(
         Company, 
@@ -399,13 +408,13 @@ class Schedule(models.Model):
         return f"{self.employee.employee_id} - {self.shift.name} - {', '.join([day.day for day in self.workdays.all()])}"
 
 class TemporaryShift(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,blank=True,null=True,default=None)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE,blank=True,null=True,default=None)
     date = models.DateField()  # অস্থায়ী শিফটের নির্দিষ্ট তারিখ
-    company = models.ForeignKey(Company, on_delete=models.CASCADE,related_name='temp_shifts')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,related_name='temp_shifts',null=True,blank=True,default=None)
     
 class WorkHours(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Employee linked to the work hours
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True)  # Employee linked to the work hours
     company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True, blank=True)  # Linking work hours with company
     date = models.DateField()  # Date for which hours are calculated
     total_hours = models.DurationField()  # Total worked hours
@@ -419,9 +428,66 @@ class Holiday(models.Model):
     """
     ছুটির দিনগুলি সংরক্ষণের জন্য Holiday মডেল।
     """
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)  # কোম্পানিভিত্তিক ছুটি
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True,blank=True,default=None)  # কোম্পানিভিত্তিক ছুটি
     date = models.DateField()  # ছুটির তারিখ
     reason = models.CharField(max_length=255)  # ছুটির কারণ যেমন ঈদ, পুজা ইত্যাদি
 
     def __str__(self):
         return f"{self.reason} - {self.date}"
+
+
+class Notice(models.Model):
+    GLOBAL = 'global'
+    DEPARTMENT = 'department'
+
+    NOTICE_TYPE_CHOICES = [
+        (GLOBAL, 'Global'),
+        (DEPARTMENT, 'Department')
+    ]
+
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    notice_type = models.CharField(max_length=20, choices=NOTICE_TYPE_CHOICES)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='notices')
+    department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.CASCADE, related_name='notices')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_notices')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        permissions = [
+            ("add_global_notice", "Can add global notice"),
+            ("change_global_notice", "Can change global notice"),
+            ("delete_global_notice", "Can delete global notice"),
+            ("view_global_notice", "Can view global notice"),
+        ]
+
+    def save(self, *args, **kwargs):
+        user = kwargs.pop('user', None)  # Retrieve the user if passed in the save method
+        if not user:
+            raise ValueError("User must be provided when saving a notice.")
+
+        # Global Notice Permission Check
+        if self.notice_type == self.GLOBAL:
+            # Check if the user has the required permissions for global notices
+            if not (user.has_perm('attendance.add_global_notice') or user.has_perm('attendance.change_global_notice')):
+                raise PermissionDenied("You do not have permission to add or change global notices.")
+            # Ensure the company is set correctly for global notices
+            self.department = None
+
+        # Department Notice Permission Check
+        elif self.notice_type == self.DEPARTMENT:
+            if not self.department:
+                raise ValueError("Department-specific notices must have a department assigned.")
+            # Ensure the department belongs to the user's company
+            if self.department.company != user.company:
+                raise PermissionDenied("You do not have permission to add or change notices for this department.")
+
+            # If the user is a company user, auto-assign their department if they have permission
+            if user.groups.filter(name='Company User').exists():
+                self.department = user.department  # Assuming `user` has a `department` field linked to the Department model
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+    

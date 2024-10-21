@@ -1,6 +1,6 @@
 # forms.py
 from django import forms
-from .models import Employee
+from .models import Employee,Department
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 
@@ -25,13 +25,4 @@ class EmployeeForm(forms.ModelForm):
                 self.fields['user'].queryset = get_user_model().objects.none()
     
     
-from .models import Notice
 
-# forms.py
-from django import forms
-from .models import Notice
-
-class NoticeForm(forms.ModelForm):
-    class Meta:
-        model = Notice
-        fields = ['title', 'content', 'department']  # Removed notice_type

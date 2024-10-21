@@ -5,6 +5,9 @@ from django.urls import reverse
 from django.utils.html import format_html
 from .views import schedule_report_view  # Custom view import করুন
 from django.core.exceptions import ValidationError
+from django.db.models import ObjectDoesNotExist
+from django.contrib.auth import get_user_model
+
 from django.contrib import messages
 
 class EmployeeDocumentInline(admin.TabularInline):
@@ -374,14 +377,46 @@ class DepartmentAdmin(admin.ModelAdmin):
             obj.company = request.user.company
         super().save_model(request, obj, form, change)    
 
-from .forms import NoticeForm
-from .models import Notice        
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    list_display = ('title', 'department', 'created_by', 'created_at')
+    list_display = ('title', 'get_departments', 'created_at')
     search_fields = ('title', 'content', 'company__name', 'department__name')
     list_filter = ('department', 'created_at')
     readonly_fields = ('created_at',)
-    exclude = ('company',)
+    exclude = ('company', )
 
-    form = NoticeForm
+    def get_departments(self, obj):
+        # Join department names to display as a string
+        return ", ".join([dept.name for dept in obj.department.all()])
+
+    get_departments.short_description = 'Departments'
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(company=request.user.company)
+
+    def get_form(self, request, obj=None, **kwargs):
+        # Get the form
+        form = super().get_form(request, obj, **kwargs)
+
+        # Filter the user field based on the request user's company
+        if request.user.is_authenticated:
+            company_id = request.user.company_id  # Get the company ID
+            # Filter users by company ID
+            form.base_fields['user'].queryset = get_user_model().objects.filter(company_id=company_id)
+
+        return form
+
+    def save_model(self, request, obj, form, change):
+        # Automatically set the company if it's not already set
+        if not obj.company:
+            obj.company = request.user.company
+
+        # Automatically set the created_by field if it's not already set
+        if not obj.created_by:
+            obj.created_by = request.user
+
+        # Save the model
+        super().save_model(request, obj, form, change)

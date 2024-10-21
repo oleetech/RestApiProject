@@ -6,10 +6,9 @@ from django.utils.translation import gettext as _
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.template.defaultfilters import filesizeformat
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
-
+from django.utils.translation import gettext_lazy as _
 
 class Department(models.Model):
     name = models.CharField(max_length=255)
@@ -20,10 +19,8 @@ class Department(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.company.name}"
-    
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
+
+
 
 class Employee(models.Model):
 
@@ -469,18 +466,25 @@ class Holiday(models.Model):
 
 
 class Notice(models.Model):
+    TARGET_CHOICES = [
+        ('ALL', 'All Departments'),
+        ('DEPT', 'Specific Departments'),
+        ('USER', 'Specific Users'),
+    ]
+
     title = models.CharField(max_length=255)
     content = models.TextField()
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='notices')
-    department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.CASCADE, related_name='notices')
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_notices')
+    department = models.ManyToManyField(Department, blank=True, related_name='notices')
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name='user_notices',
+        null=True,  # Allow null if the notice isn't associated with a specific user
+        blank=True
+    )
+    target_type = models.CharField(max_length=10, choices=TARGET_CHOICES, default='ALL')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
 
-        super().save(*args, **kwargs)
 
-    def __str__(self):
-        return self.title
-
-    

@@ -85,3 +85,8 @@ def sum_number(value, number):
 def neg_num(value, number):
     return value - number
 
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)

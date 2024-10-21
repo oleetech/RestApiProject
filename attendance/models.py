@@ -8,6 +8,7 @@ from django.core.validators import FileExtensionValidator
 from django.template.defaultfilters import filesizeformat
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth import get_user_model
 
 
 class Department(models.Model):
@@ -20,14 +21,20 @@ class Department(models.Model):
     def __str__(self):
         return f"{self.name} - {self.company.name}"
     
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
 class Employee(models.Model):
 
+    # Gender Choices
     GENDER_CHOICES = (
         ('M', 'Male'),
         ('F', 'Female'),
         ('O', 'Other'),
     )
 
+    # Blood Group Choices
     BLOOD_GROUP_CHOICES = [
         ('A+', 'A+'),
         ('A-', 'A-'),
@@ -39,6 +46,7 @@ class Employee(models.Model):
         ('O-', 'O-'),
     ]
 
+    # Religion Choices
     RELIGION_CHOICES = [
         ('Christianity', 'Christianity'),
         ('Islam', 'Islam'),
@@ -49,11 +57,29 @@ class Employee(models.Model):
         ('Other', 'Other'),
     ]
 
+    # Marital Status Choices
     MARITAL_STATUS_CHOICES = [
         ('Single', 'Single'),
         ('Married', 'Married'),
         ('Divorced', 'Divorced'),
         ('Widowed', 'Widowed'),
+    ]
+
+    # Status Choices
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+        ('On Leave', 'On Leave'),
+        ('Suspended', 'Suspended'),
+        ('Terminated', 'Terminated'),
+        ('Resigned', 'Resigned'),
+    ]
+
+    # Salary Type Choices
+    SALARY_TYPE_CHOICES = [
+        ('Monthly', 'Monthly'),
+        ('Hourly', 'Hourly'),
+        ('Contract', 'Contract'),
     ]
 
     company = models.ForeignKey(
@@ -63,100 +89,104 @@ class Employee(models.Model):
         verbose_name=_("Company"),
         null=True, blank=True,
     )
+    
+    user = models.ForeignKey(
+        get_user_model(),  
+        on_delete=models.CASCADE, 
+        related_name='employees',  
+        null=True,  
+        blank=True  
+    )  
+
     employee_id = models.CharField(
         max_length=20,
         verbose_name=_("Employee ID"),
     )
-    first_name = models.CharField(max_length=50, null=True, blank=True,  verbose_name=_("First Name"))
-    last_name = models.CharField(max_length=50,null=True, blank=True,  verbose_name=_("Last Name"))
-    full_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Full Name"), editable=False)
 
-
-    department = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Department name"))  
-    position = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Position title"))  
-    contact_number = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Contact number"))  
-
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES,default="M")
-    bloodGroup = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES,blank=True, null=True)
-    religion = models.CharField(max_length=20, choices=RELIGION_CHOICES,blank=True, null=True)
-    maritalStatus = models.CharField(max_length=10, choices=MARITAL_STATUS_CHOICES,blank=True, null=True)    
-    date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of joining"))  
-    email = models.EmailField(max_length=255, null=True, blank=True, verbose_name=_("Email Address"))
+    name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_(" Name"))
+    father_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Father's Name"))
     date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Date of Birth"))
- 
+
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default="M")
+    contact_number = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Contact Number"))  
+
+    # Address Fields
+    local_address = models.TextField(null=True, blank=True, verbose_name=_("Local Address"))
+    permanent_address = models.TextField(null=True, blank=True, verbose_name=_("Permanent Address"))
+
+    # Reference Fields
+    reference_name = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Reference Name"))
+    reference_phone = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Reference Phone"))
+
+    # Employment Fields
+    designation = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Designation"))
+    status = models.CharField(
+        max_length=10, 
+        choices=STATUS_CHOICES, 
+        default='Active', 
+        verbose_name=_("Status")
+    )
+
+    salary_type = models.CharField(max_length=20, choices=SALARY_TYPE_CHOICES, verbose_name=_("Salary Type"))
+    salary_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Salary Amount"))
+
+    # Bank Account Details
+    bank_name = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Bank Name"))
+    bank_account_number = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Bank Account Number"))
+    bank_ifsc_code = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Bank IFSC Code"))
+
+    # Other Personal Details
+    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
+    religion = models.CharField(max_length=20, choices=RELIGION_CHOICES, blank=True, null=True)
+    marital_status = models.CharField(max_length=10, choices=MARITAL_STATUS_CHOICES, blank=True, null=True)
+    date_of_joining = models.DateField(null=True, blank=True, verbose_name=_("Date of Joining"))
+    email = models.EmailField(max_length=255, null=True, blank=True, verbose_name=_("Email Address"))
+
+    # Emergency Contact Fields
+    emergency_contact_name = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Emergency Contact Name"))
+    emergency_contact_phone = models.CharField(max_length=15, null=True, blank=True, verbose_name=_("Emergency Contact Phone"))
+    emergency_contact_relationship = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Emergency Contact Relationship"))
+
+    # Department and Position
+    department = models.ForeignKey('Department', null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_("Department"))  
+    position = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Position Title"))  
+
     class Meta:
         verbose_name = _("Employee")  
         verbose_name_plural = _("Employees")  
         ordering = ['date_of_joining']  
         constraints = [
-            # Unique constraint per company for employee ID
             models.UniqueConstraint(fields=['company', 'employee_id'], name='unique_employee_per_company'),
-            # Ensure unique contact number
             models.UniqueConstraint(fields=['contact_number'], name='unique_contact_number'),
-            # Ensure unique email
             models.UniqueConstraint(fields=['email'], name='unique_email'),
-            # Ensure date of birth is before the date of joining
             models.CheckConstraint(check=models.Q(date_of_birth__lt=models.F('date_of_joining')), name='check_birth_before_joining'),
-            # Ensure employee ID is alphanumeric
             models.CheckConstraint(check=models.Q(employee_id__regex=r'^[a-zA-Z0-9]+$'), name='check_employee_id_alphanumeric'),
-            # Ensure contact number is numeric
             models.CheckConstraint(check=models.Q(contact_number__regex=r'^[0-9]+$'), name='check_contact_number_numeric'),
-            # Ensure email contains "@" symbol
             models.CheckConstraint(check=models.Q(email__contains='@'), name='check_valid_email'),
-            # Ensure date of birth is after a reasonable minimum date (e.g., 1900-01-01)
             models.CheckConstraint(check=models.Q(date_of_birth__gt='1900-01-01'), name='check_valid_birth_date'),
-            # এই কনস্ট্রেইন্টটি সরিয়ে নিন
-            # models.CheckConstraint(check=models.Q(date_of_joining__lte=models.functions.Now()), name='check_valid_joining_date'),
         ]
 
     def save(self, *args, **kwargs):
-        request = kwargs.pop('request', None)
-        
-        if request and not self.company:
-            if not request.user.company:
-                raise ValidationError("আপনার ইউজার প্রোফাইলে কোনো কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
-            else:
-                self.company = request.user.company
-
-        if self.company:
-            current_employee_count = self.company.company_employees.count()
-            max_employees_allowed = self.company.subscription.max_employees
-            
-            if current_employee_count >= max_employees_allowed:
-                raise ValidationError(
-                    f"Cannot add more employees. The maximum limit of {max_employees_allowed} employees for this company's subscription has been reached."
-                )
-
+        # Your custom save logic here
         super().save(*args, **kwargs)
-
-        
-    def __str__(self):
-        return f"({self.employee_id} {self.first_name})"  
 
     def clean(self):
         super().clean()
-        
-        if not self.first_name and not self.last_name:
-            raise ValidationError(_("At least one of First Name or Last Name must be provided."))
-        
+
+        if not self.name and not self.father_name:
+            raise ValidationError(_("At least one of First Name or Father's Name must be provided."))
+
         if self.email and '@' not in self.email:
             raise ValidationError(_("Email address must contain a valid '@' symbol."))
 
         if self.contact_number and not self.contact_number.isdigit():
             self.add_error('contact_number', _("Contact number must be numeric."))
-            
+
         if self.contact_number and (len(self.contact_number) < 10 or len(self.contact_number) > 15):
             self.add_error('contact_number', _("Contact number must be between 10 and 15 digits."))
 
-    @property
-    def full_name(self):
-        """Return the full name of the employee if user has first and last name."""
-        return f"{self.user.first_name} {self.user.last_name}".strip()
-
-    def get_department_and_position(self):
-        """Return a string representation of department and position."""
-        return f"{self.position} in {self.department}" if self.department and self.position else _("No specific department or position assigned.") 
-
+    def __str__(self):
+        return f"({self.employee_id} {self.name})"
 
 class EmployeeDocument(models.Model):
     EMPLOYEE_DOCUMENT_TYPES = (
@@ -436,58 +466,21 @@ class Holiday(models.Model):
         return f"{self.reason} - {self.date}"
 
 
+
+
 class Notice(models.Model):
-    GLOBAL = 'global'
-    DEPARTMENT = 'department'
-
-    NOTICE_TYPE_CHOICES = [
-        (GLOBAL, 'Global'),
-        (DEPARTMENT, 'Department')
-    ]
-
     title = models.CharField(max_length=255)
     content = models.TextField()
-    notice_type = models.CharField(max_length=20, choices=NOTICE_TYPE_CHOICES)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='notices')
     department = models.ForeignKey(Department, null=True, blank=True, on_delete=models.CASCADE, related_name='notices')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_notices')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        permissions = [
-            ("add_global_notice", "Can add global notice"),
-            ("change_global_notice", "Can change global notice"),
-            ("delete_global_notice", "Can delete global notice"),
-            ("view_global_notice", "Can view global notice"),
-        ]
-
     def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Retrieve the user if passed in the save method
-        if not user:
-            raise ValueError("User must be provided when saving a notice.")
-
-        # Global Notice Permission Check
-        if self.notice_type == self.GLOBAL:
-            # Check if the user has the required permissions for global notices
-            if not (user.has_perm('attendance.add_global_notice') or user.has_perm('attendance.change_global_notice')):
-                raise PermissionDenied("You do not have permission to add or change global notices.")
-            # Ensure the company is set correctly for global notices
-            self.department = None
-
-        # Department Notice Permission Check
-        elif self.notice_type == self.DEPARTMENT:
-            if not self.department:
-                raise ValueError("Department-specific notices must have a department assigned.")
-            # Ensure the department belongs to the user's company
-            if self.department.company != user.company:
-                raise PermissionDenied("You do not have permission to add or change notices for this department.")
-
-            # If the user is a company user, auto-assign their department if they have permission
-            if user.groups.filter(name='Company User').exists():
-                self.department = user.department  # Assuming `user` has a `department` field linked to the Department model
 
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
     

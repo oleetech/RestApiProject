@@ -1,6 +1,7 @@
 # Python bytecode
-*__pycache__/
+__pycache__/
 *.py[cod]
+*.pyc
 
 # Django migrations
 */migrations/*.py
@@ -23,4 +24,5 @@ venv/
 ENV/
 env/
 
-*uploads/
+# Uploaded files
+uploads/

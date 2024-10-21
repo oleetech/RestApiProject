@@ -9,7 +9,8 @@
     <div class="row">  <!-- Start the row here -->
         {% for line in fieldset %}
             {% for field in line %}
-                <div class="col-md-6">  <!-- Each field will take half the width -->
+                {# Set the column size dynamically based on the fieldset's col_size #}
+                <div class="col-md-{{ fieldset.col_size|default:'12' }}">  <!-- Dynamically set the width -->
                     <div class="form-group mb-2 {% if field.errors %} errors{% endif %} {% if not field.is_readonly and not line.has_visible_field %} hidden{% endif %}">
                         {% if field.errors %}
                             <div class="invalid-feedback d-block">{{ field.errors }}</div>  <!-- Show errors for each field -->
@@ -28,7 +29,7 @@
                             {% if field.is_readonly %}
                                 <div class="readonly">{{ field.contents }}</div>  <!-- Display read-only content -->
                             {% else %}
-                                {{ field.field }}  <!-- Render the input field, which now has the medium class -->
+                                {{ field.field }}  <!-- Render the input field -->
                             {% endif %}
                         {% endif %}
 

@@ -159,22 +159,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Wait for the DOM content to load
 document.addEventListener('DOMContentLoaded', function() {
-    // Select the <select> element using its name attribute
-    const subscriptionSelect = document.querySelector('select[name="subscription"]');
+    // Select all <select> elements
+    const selectElements = document.querySelectorAll('select');
 
-    // Check if the <select> element exists
-    if (subscriptionSelect) {
+    // Loop through each <select> element
+    selectElements.forEach(function(selectElement) {
         // Remove the 'related-widget-wrapper' class from its parent element
-        const parentWrapper = subscriptionSelect.closest('.related-widget-wrapper');
+        const parentWrapper = selectElement.closest('.related-widget-wrapper');
         if (parentWrapper) {
             parentWrapper.classList.remove('related-widget-wrapper');
         }
 
         // Add 'form-group mb-2' class to the parent element
-        if (parentWrapper) {
-            parentWrapper.classList.add('form-group', 'mb-2');
-        }
-    }
+        parentWrapper.classList.add('form-group', 'mb-2');
+    });
 });
 
 

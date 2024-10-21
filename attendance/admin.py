@@ -12,55 +12,76 @@ class EmployeeDocumentInline(admin.TabularInline):
     extra = 1 
     fields = ('document_name', 'document_type', 'document_file')
     readonly_fields = ('upload_date',)  
+
 from .forms import EmployeeForm
+
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    form = EmployeeForm  
-
-    def get_form(self, request, obj=None, **kwargs):
-        # Pass the request to the form
-        form = super().get_form(request, obj, **kwargs)
-        form.request = request  # Attach the request object to the form
-        return form
-            
-    list_display = ('id', 'employee_id', 'company', 'department', 'position', 'contact_number', 'date_of_joining', 'first_name')
-    search_fields = ('employee_id', 'department', 'position', 'company__name')
-    list_filter = ('department', 'position', 'date_of_joining', 'company')
-    exclude = ('company',)  
-    
+    form = EmployeeForm  # Use the custom form
     inlines = [EmployeeDocumentInline]  
-    fieldsets = (
-        (None, {  
-            'fields': ('employee_id', 'first_name', 'last_name',  'contact_number', 'date_of_joining')
-        }),
-        ('Details', {  
-            'fields': ('department', 'position', 'gender', 'bloodGroup', 'religion', 'maritalStatus', 'date_of_birth', 'email')
-        }),
+ 
+    def get_form(self, request, obj=None, **kwargs):
+        # Get the form class by calling super
+        form = super().get_form(request, obj, **kwargs)
+        
+        # Define a wrapper function that injects the request into the form instance
+        class RequestForm(form):
+            def __init__(self2, *args, **inner_kwargs):
+                # Pass the request object to the form
+                inner_kwargs['request'] = request
+                super().__init__(*args, **inner_kwargs)
 
+        # Return the modified form class that includes the request
+        return RequestForm
+
+    # Admin configurations (e.g., list_display, search_fields, etc.)
+    list_display = ('id', 'employee_id', 'company', 'department', 'position', 'contact_number', 'date_of_joining', 'name')
+    search_fields = ('employee_id', 'department__name', 'position', 'company__name')
+    list_filter = ('department', 'position', 'date_of_joining', 'company')
+    exclude = ('company',)
+
+    fieldsets = (
+        ("Company Information ", {
+            'fields': ('employee_id', 'user', 'name', 'contact_number', 'date_of_joining')
+        }),
+        ('Personal Details', {
+            'fields': ('date_of_birth', 'gender', 'marital_status', 'blood_group', 'religion', 'email')
+        }),
+        ('Employment Details', {
+            'fields': ('department', 'position', 'status', 'salary_type', 'salary_amount')
+        }),
+        ('Bank Details', {
+            'fields': ('bank_name', 'bank_account_number', 'bank_ifsc_code')
+        }),
+        ('Emergency Contact', {
+            'fields': ('emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship')
+        }),
+        ('References', {
+            'fields': ('reference_name', 'reference_phone')
+        }),
+        ('Address', {
+            'fields': ('local_address', 'permanent_address')
+        }),
     )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
-            return qs  
-        return qs.filter(company=request.user.company) 
+            return qs
+        return qs.filter(company=request.user.company)
 
     def save_model(self, request, obj, form, change):
         if not obj.company:
-            if not request.user.company:
-                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
-                raise ValidationError("Company must be set for the user.")
-            obj.company = request.user.company 
+            obj.company = request.user.company
         super().save_model(request, obj, form, change)
 
     def get_formset(self, request, obj=None, **kwargs):
-        # Get the formset for the inline model
         formset = super().get_formset(request, obj, **kwargs)
-
-        # Update the widget for the 'document_file' field in the inline formset
-        for form in formset.forms:
-            form.fields['document_file'].widget.attrs.update({'class': 'custom-file-input'})  # Custom CSS class for file input
-
+        if request.POST:
+            for form in formset:
+                # Custom validation logic
+                if not form.cleaned_data.get('document_file'):
+                    form.add_error('document_file', 'Document file is required.')
         return formset
 # Registering Device model in the admin
 @admin.register(Device)
@@ -352,33 +373,15 @@ class DepartmentAdmin(admin.ModelAdmin):
             # Assign the user's company to the Holiday object
             obj.company = request.user.company
         super().save_model(request, obj, form, change)    
-        
-from .forms import NoticeForm    
+
+from .forms import NoticeForm
+from .models import Notice        
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    list_display = ('title', 'notice_type', 'department', 'created_by', 'created_at')
+    list_display = ('title', 'department', 'created_by', 'created_at')
     search_fields = ('title', 'content', 'company__name', 'department__name')
-    list_filter = ('notice_type', 'department', 'created_at')
+    list_filter = ('department', 'created_at')
     readonly_fields = ('created_at',)
     exclude = ('company',)
 
-    # Use the custom form
     form = NoticeForm
-
-    def get_form(self, request, obj=None, **kwargs):
-        # Use the custom form and pass the user instance to it
-        kwargs['form'] = NoticeForm
-        form = super(NoticeAdmin, self).get_form(request, obj, **kwargs)
-        form.user = request.user  # Pass the request user to the form instance
-        return form
-
-    def save_model(self, request, obj, form, change):
-        # Assign the user's company to the Notice object if not already set
-        if not obj.company:
-            if not hasattr(request.user, 'company') or not request.user.company:
-                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
-                raise ValidationError("Company must be set for the user.")
-            obj.company = request.user.company
-
-        obj.created_by = request.user
-        super().save_model(request, obj, form, change)

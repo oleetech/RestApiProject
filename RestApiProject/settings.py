@@ -60,6 +60,8 @@ CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': 'full',
         'extraPlugins': 'image2',
+        'width': '100%',    
+        'height': '400px',         
     },
 }
 

@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from ckeditor_uploader.fields import RichTextUploadingField  # Use CKEditor 5 field
+import os
 
 class Department(models.Model):
     name = models.CharField(max_length=255)
@@ -422,31 +423,30 @@ class Workday(models.Model):
         return self.day
 
 class Schedule(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,default=None,blank=True,null=True)  # Employee linked to the schedule
-    shift = models.ForeignKey('Shift', on_delete=models.CASCADE,blank=True,null=True,default=None)  # The shift they are assigned to
-    workdays = models.ManyToManyField(Workday)  # Allow multiple workdays
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,default=None,blank=True,null=True)  
+    shift = models.ForeignKey('Shift', on_delete=models.CASCADE,blank=True,null=True,default=None)  
+    workdays = models.ManyToManyField(Workday) 
     company = models.ForeignKey(
         Company, 
         on_delete=models.CASCADE, 
-        related_name='schedules',  # Changed related_name to 'schedules'
+        related_name='schedules',  
         null=True
     )
     def __str__(self):
-        # Using employee_id and position from Employee model
         return f"{self.employee.employee_id} - {self.shift.name} - {', '.join([day.day for day in self.workdays.all()])}"
 
 class TemporaryShift(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE,blank=True,null=True,default=None)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE,blank=True,null=True,default=None)
-    date = models.DateField()  # অস্থায়ী শিফটের নির্দিষ্ট তারিখ
+    date = models.DateField() 
     company = models.ForeignKey(Company, on_delete=models.CASCADE,related_name='temp_shifts',null=True,blank=True,default=None)
     
 class WorkHours(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True)  # Employee linked to the work hours
-    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True, blank=True)  # Linking work hours with company
-    date = models.DateField()  # Date for which hours are calculated
-    total_hours = models.DurationField()  # Total worked hours
-    overtime_hours = models.DurationField(null=True, blank=True)  # Optional overtime hours
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True)  
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True, blank=True)  
+    date = models.DateField()  
+    total_hours = models.DurationField() 
+    overtime_hours = models.DurationField(null=True, blank=True)  
 
     def __str__(self):
         return f"{self.employee.user.username} - {self.date} - {self.total_hours}"      
@@ -456,15 +456,26 @@ class Holiday(models.Model):
     """
     ছুটির দিনগুলি সংরক্ষণের জন্য Holiday মডেল।
     """
-    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True,blank=True,default=None)  # কোম্পানিভিত্তিক ছুটি
-    date = models.DateField()  # ছুটির তারিখ
-    reason = models.CharField(max_length=255)  # ছুটির কারণ যেমন ঈদ, পুজা ইত্যাদি
-
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True,blank=True,default=None) 
+    date = models.DateField()  
+    reason = models.CharField(max_length=255)  
     def __str__(self):
         return f"{self.reason} - {self.date}"
 
 
+def get_upload_path(instance, filename):
+    # Get the company name from the instance
+    if instance.company:
+        company_name = instance.company.name
+        # Sanitize the company name to avoid invalid characters in the filename
+        company_name = company_name.replace(' ', '_')  # Replace spaces with underscores
+        company_name = ''.join(c for c in company_name if c.isalnum() or c in ['_', '-'])  # Allow alphanumeric characters, underscores, and hyphens
 
+        # Return the path using the company name
+        return os.path.join('uploads', 'notics', company_name, filename)
+    
+    # Default path if company is not set (e.g., during model creation before save)
+    return os.path.join('uploads', 'notics', filename)
 
 class Notice(models.Model):
     TARGET_CHOICES = [
@@ -474,17 +485,19 @@ class Notice(models.Model):
     ]
 
     title = models.CharField(max_length=255)
-    content = RichTextUploadingField()  # Updated to use CKEditor 5 field
+    content = RichTextUploadingField()  
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='notices')
     department = models.ManyToManyField(Department, blank=True, related_name='notices')
     user = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
         related_name='user_notices',
-        null=True,  # Allow null if the notice isn't associated with a specific user
+        null=True,  
         blank=True
     )
     target_type = models.CharField(max_length=10, choices=TARGET_CHOICES, default='ALL')
+    file = models.FileField(upload_to=get_upload_path, blank=True, null=True)  
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
 

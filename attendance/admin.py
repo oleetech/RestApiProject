@@ -394,7 +394,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 from .forms import NoticeForm    
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    list_display = ('title', 'get_departments', 'created_at')
+    list_display = ('title', 'get_departments','file', 'created_at')
     search_fields = ('title', 'content', 'company__name', 'department__name')
     list_filter = ('department', 'created_at')
     # readonly_fields = ('created_at',)

@@ -19,8 +19,10 @@
 {% endif %}
 
 {% block content %}
+
     <div class="py-4 mt-5 mx-5">
         <div class="d-flex justify-content-between w-100 flex-wrap">
+
             <div class="mb-3 mb-lg-0">
                 <h1 class="h4">
                     {% if add %}
@@ -42,6 +44,8 @@
         </div>
     </div>
 
+    
+
     <div class="container-fluid">
         <div class="row">
             <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}"
@@ -50,7 +54,7 @@
 
                 <!-- Render the fieldsets -->
                 {% for fieldset in adminform %}
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="card mb-4">
                             <div class="card-body">
                                 {% include "admin/includes/fieldset.html" with fieldset=fieldset %}

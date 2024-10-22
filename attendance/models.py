@@ -237,8 +237,8 @@ class Device(models.Model):
 
     def clean(self):
         super().clean()
-        if len(self.serial_number) < 10:
-            raise ValidationError("Serial number must be at least 10 characters long.")
+        # if len(self.serial_number) < 10:
+        #     raise ValidationError("Serial number must be at least 10 characters long.")
         if not self.ip_address:
             raise ValidationError("Device must have a valid IP address.")
         if not (1 <= self.port <= 65535):

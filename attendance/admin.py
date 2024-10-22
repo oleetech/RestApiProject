@@ -121,10 +121,7 @@ class DeviceAdmin(admin.ModelAdmin):
         ("Device Information", {  # First fieldset with no title
             'fields': ('device_id', 'location', 'ip_address', 'port')
         }),
-        ('Advanced Settings', {  # Second fieldset with a title
-            'fields': ('last_sync_time',),  # You can add more fields as needed
-            'classes': ('collapse',),  # This will make this fieldset collapsible
-        }),
+   
     )
 
 # Registering AttendanceLog model in the admin
@@ -365,26 +362,45 @@ class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'company')
     search_fields = ('name', 'company__name')
     list_filter = ('company',)
-    exclude = ('company',)  
-    def save_model(self, request, obj, form, change):
-        # Check if the object has a company
-        if not obj.company:
-            # Check if the user has a company
-            if not hasattr(request.user, 'company') or not request.user.company:
-                form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
-                raise ValidationError("Company must be set for the user.")
-            # Assign the user's company to the Holiday object
-            obj.company = request.user.company
-        super().save_model(request, obj, form, change)    
 
+    def get_exclude(self, request, obj=None):
+        # Exclude the 'company' field for non-superusers
+        if not request.user.is_superuser:
+            return ('company',)
+        return super().get_exclude(request, obj=obj)  # No exclusions for superusers
+
+    def save_model(self, request, obj, form, change):
+        # Check if the user is not a superuser
+        if not request.user.is_superuser:
+            # Check if the department object has a company
+            if not obj.company_id:
+                # Check if the user has a company
+                if not hasattr(request.user, 'company') or not request.user.company:
+                    form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                    raise ValidationError("User profile must have an associated company.")
+                
+                # Assign the user's company to the department
+                obj.company = request.user.company
+        
+        super().save_model(request, obj, form, change)
+
+    def get_queryset(self, request):
+        # Optionally limit the queryset to only departments in the user's company
+        qs = super().get_queryset(request)
+        if hasattr(request.user, 'company') and request.user.company:
+            return qs.filter(company=request.user.company)
+        return qs
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
     list_display = ('title', 'get_departments', 'created_at')
     search_fields = ('title', 'content', 'company__name', 'department__name')
     list_filter = ('department', 'created_at')
-    readonly_fields = ('created_at',)
-    exclude = ('company', )
-
+    # readonly_fields = ('created_at',)
+    exclude = ('company','created_at', )
+    
+    class Media:
+        js = ('attendance/js/custom_notice_admin.js',)
+        
     def get_departments(self, obj):
         # Join department names to display as a string
         return ", ".join([dept.name for dept in obj.department.all()])
@@ -392,31 +408,56 @@ class NoticeAdmin(admin.ModelAdmin):
     get_departments.short_description = 'Departments'
 
     def get_queryset(self, request):
+        # Optionally limit the queryset to only departments in the user's company
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(company=request.user.company)
+        if hasattr(request.user, 'company') and request.user.company:
+            return qs.filter(company=request.user.company)
+        return qs
 
     def get_form(self, request, obj=None, **kwargs):
         # Get the form
         form = super().get_form(request, obj, **kwargs)
 
-        # Filter the user field based on the request user's company
-        if request.user.is_authenticated:
+        # Filter the user and department fields based on the request user's company
+        if request.user.is_authenticated and hasattr(request.user, 'company'):
             company_id = request.user.company_id  # Get the company ID
-            # Filter users by company ID
-            form.base_fields['user'].queryset = get_user_model().objects.filter(company_id=company_id)
+
+            # Check if the 'user' field exists before applying the filter
+            if 'user' in form.base_fields:
+                form.base_fields['user'].queryset = get_user_model().objects.filter(company_id=company_id)
+            
+            # Check if the 'department' field exists before applying the filter
+            if 'department' in form.base_fields:
+                form.base_fields['department'].queryset = Department.objects.filter(company_id=company_id)
 
         return form
 
+    def get_fields(self, request, obj=None):
+        # Get the base fields
+        fields = super().get_fields(request, obj)
+
+        # Customize field visibility based on the target_type value
+        if obj and obj.target_type == 'ALL':
+            fields.remove('department')
+            fields.remove('user')
+        elif obj and obj.target_type == 'DEPT':
+            fields.remove('user')
+        elif obj and obj.target_type == 'USER':
+            fields.remove('department')
+
+        return fields
+    
     def save_model(self, request, obj, form, change):
-        # Automatically set the company if it's not already set
-        if not obj.company:
-            obj.company = request.user.company
-
-        # Automatically set the created_by field if it's not already set
-        if not obj.created_by:
-            obj.created_by = request.user
-
-        # Save the model
+        # Check if the user is not a superuser
+        if not request.user.is_superuser:
+            # Check if the department object has a company
+            if not obj.company_id:
+                # Check if the user has a company
+                if not hasattr(request.user, 'company') or not request.user.company:
+                    form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                    raise ValidationError("User profile must have an associated company.")
+                
+                # Assign the user's company to the department
+                obj.company = request.user.company
+        
         super().save_model(request, obj, form, change)

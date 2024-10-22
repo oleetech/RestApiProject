@@ -9,7 +9,7 @@ from django.template.defaultfilters import filesizeformat
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from ckeditor_uploader.fields import RichTextUploadingField  # Use CKEditor 5 field
+from django_ckeditor_5.fields import CKEditor5Field
 import os
 
 class Department(models.Model):
@@ -321,7 +321,7 @@ class AttendanceLog(models.Model):
     updatedAt = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.employee.username} - {self.timestamp} - {self.status}"
+        return f"{self.employee.name}"
 
     class Meta:
         verbose_name = "Attendance Log"
@@ -350,7 +350,7 @@ class AttendanceLog(models.Model):
         Return a summary of the attendance log, including employee name, status, and location.
         """
         location = self.locationName if self.locationName else 'Unknown Location'
-        return f"Attendance Log: {self.employee.username} {self.status} at {location} on {self.timestamp}."
+        return f"Attendance Log: {self.employee.name} {self.status} at {location} on {self.timestamp}."
 
 
 
@@ -485,7 +485,7 @@ class Notice(models.Model):
     ]
 
     title = models.CharField(max_length=255)
-    content = RichTextUploadingField()  
+    content = CKEditor5Field('Content')  
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='notices')
     department = models.ManyToManyField(Department, blank=True, related_name='notices')
     user = models.ForeignKey(

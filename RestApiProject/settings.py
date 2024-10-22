@@ -50,20 +50,96 @@ INSTALLED_APPS = [
     'authentication', # My Authentication App
     'attendance', # Attendance App
     'django_extensions',  # Add this line
-    'ckeditor',
-    'ckeditor_uploader',  # For image uploads
+    'django_ckeditor_5',
 ]
-CKEDITOR_IMAGE_BACKEND = 'pillow'
+# CKEditor 5 File Storage Setup
+CKEDITOR_5_FILE_STORAGE = "django.core.files.storage.FileSystemStorage" 
+# CKEditor 5 File Upload Path
+CKEDITOR_5_UPLOAD_PATH = "uploads/"  
 
-CKEDITOR_UPLOAD_PATH = "uploads/"  # Path for uploaded files
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'full',
-        'extraPlugins': 'image2',
-        'width': '100%',    
-        'height': '400px',         
+# Custom Color Palette for Tables and Background
+customColorPalette = [
+    {
+        'color': 'hsl(4, 90%, 58%)',
+        'label': 'Red'
     },
+    {
+        'color': 'hsl(340, 82%, 52%)',
+        'label': 'Pink'
+    },
+    {
+        'color': 'hsl(291, 64%, 42%)',
+        'label': 'Purple'
+    },
+    {
+        'color': 'hsl(262, 52%, 47%)',
+        'label': 'Deep Purple'
+    },
+    {
+        'color': 'hsl(231, 48%, 48%)',
+        'label': 'Indigo'
+    },
+    {
+        'color': 'hsl(207, 90%, 54%)',
+        'label': 'Blue'
+    },
+    {
+        'color': 'hsl(120, 75%, 60%)',
+        'label': 'Green'
+    },
+    {
+        'color': 'hsl(60, 90%, 50%)',
+        'label': 'Yellow'
+    }
+]
+
+# CKEditor 5 Configuration
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|', 'bold', 'italic', 'link', 'underline', 'strikethrough', 'subscript', 'superscript', 'highlight', 
+            '|', 'bulletedList', 'numberedList', 'todoList', '|', 'blockQuote', 'insertTable', 'imageUpload', '|',
+            'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'mediaEmbed', 'removeFormat', '|',
+            'codeBlock', 'sourceEditing', 'outdent', 'indent'
+        ],
+        'image': {
+            'toolbar': ['imageTextAlternative', '|', 'imageStyle:alignLeft', 'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:side'],
+            'styles': ['full', 'side', 'alignLeft', 'alignRight', 'alignCenter']
+        },
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties'],
+            'tableProperties': {
+                'borderColors': customColorPalette,
+                'backgroundColors': customColorPalette
+            },
+            'tableCellProperties': {
+                'borderColors': customColorPalette,
+                'backgroundColors': customColorPalette
+            }
+        },
+        'list': {
+            'properties': {
+                'styles': True,  # Allows list styles (e.g., circle, disc, square)
+                'startIndex': True,  # Allows lists to start at a specific number
+                'reversed': True  # Allows numbered lists to be reversed
+            }
+        },
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'}
+            ]
+        },
+        'mediaEmbed': {
+            'previewsInData': True  # Enable media preview in the editor
+        },
+        'height': 500,  # Editor height
+        'width': '100%',  # Editor width
+    }
 }
+
 
 
 AUTH_USER_MODEL = 'authentication.CustomUser'  # আপনার অ্যাপের নাম দিয়ে 'your_app_name' রিপ্লেস করুন 
@@ -256,6 +332,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # You might also want to ensure you have these settings
 STATIC_URL = '/static/'
 
+# Media Configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 # Additional settings for static files if necessary
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # where your static files are during development

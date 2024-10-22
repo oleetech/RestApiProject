@@ -31,7 +31,7 @@ urlpatterns = [
     re_path(r'^auth/', include('social_django.urls', namespace='social')),  # Social Auth URL
     re_path(r'^docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),  # Swagger
     re_path('^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('ckeditor5/', include('django_ckeditor_5.urls')),  # Include CKEditor 5 URLs
     
     path('authentication/', include('authentication.urls')),  
     path('auth-api/', include('authentication.api.urls')),
@@ -41,4 +41,7 @@ urlpatterns = [
 
     path('set_language/', include('django.conf.urls.i18n')),
 
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] 
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

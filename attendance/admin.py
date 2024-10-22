@@ -23,6 +23,15 @@ class EmployeeAdmin(admin.ModelAdmin):
     form = EmployeeForm  # Use the custom form
     inlines = [EmployeeDocumentInline]  
  
+
+
+    # Admin configurations (e.g., list_display, search_fields, etc.)
+    list_display = ('employee_id', 'name', 'status', 'date_of_joining', 'company')  # Customize the columns displayed
+    search_fields = ('name', 'employee_id', 'email', 'contact_number')  # Enable search on these fields
+    list_filter = ('status', 'department', 'date_of_joining')  # Add filters for easier navigation
+   
+
+
     def get_form(self, request, obj=None, **kwargs):
         # Get the form class by calling super
         form = super().get_form(request, obj, **kwargs)
@@ -36,36 +45,37 @@ class EmployeeAdmin(admin.ModelAdmin):
 
         # Return the modified form class that includes the request
         return RequestForm
+    # Dynamically define fieldsets based on user permissions
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = (
+            ("Company Information ", {
+                'fields': ('employee_id', 'user', 'name', 'contact_number', 'date_of_joining')
+            }),
+            ('Personal Details', {
+                'fields': ('date_of_birth', 'gender', 'marital_status', 'blood_group', 'religion', 'email')
+            }),
+            ('Employment Details', {
+                'fields': ('department', 'position', 'status', 'salary_type', 'salary_amount')
+            }),
+            ('Bank Details', {
+                'fields': ('bank_name', 'bank_account_number', 'bank_ifsc_code')
+            }),
+            ('Emergency Contact', {
+                'fields': ('emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship')
+            }),
+            ('References', {
+                'fields': ('reference_name', 'reference_phone')
+            }),
+            ('Address', {
+                'fields': ('local_address', 'permanent_address')
+            }),
+        )
 
-    # Admin configurations (e.g., list_display, search_fields, etc.)
-    list_display = ('id', 'employee_id', 'company', 'department', 'position', 'contact_number', 'date_of_joining', 'name')
-    search_fields = ('employee_id', 'department__name', 'position', 'company__name')
-    list_filter = ('department', 'position', 'date_of_joining', 'company')
-    exclude = ('company',)
+        # If the user is a superuser, add the company field to the Company Information section
+        if request.user.is_superuser:
+            fieldsets[0][1]['fields'] += ('company',)  # Add company field to the first fieldset
 
-    fieldsets = (
-        ("Company Information ", {
-            'fields': ('employee_id', 'user', 'name', 'contact_number', 'date_of_joining')
-        }),
-        ('Personal Details', {
-            'fields': ('date_of_birth', 'gender', 'marital_status', 'blood_group', 'religion', 'email')
-        }),
-        ('Employment Details', {
-            'fields': ('department', 'position', 'status', 'salary_type', 'salary_amount')
-        }),
-        ('Bank Details', {
-            'fields': ('bank_name', 'bank_account_number', 'bank_ifsc_code')
-        }),
-        ('Emergency Contact', {
-            'fields': ('emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship')
-        }),
-        ('References', {
-            'fields': ('reference_name', 'reference_phone')
-        }),
-        ('Address', {
-            'fields': ('local_address', 'permanent_address')
-        }),
-    )
+        return fieldsets
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -131,7 +141,7 @@ class AttendanceLogAdmin(admin.ModelAdmin):
     Admin interface for AttendanceLog model.
     """
     list_display = ('id', 'employee', 'company', 'punch_datetime', 'in_out_status', 'punch_mode', 'device', 'locationName')
-    search_fields = ('employee__username', 'company__name', 'device__device_id', 'in_out_status')
+    search_fields = ('employee__name', 'company__name', 'device__device_id', 'in_out_status')
     list_filter = ('company', 'in_out_status', 'punch_mode', 'punch_datetime')
 
     exclude = ('company',)  
@@ -440,13 +450,13 @@ class NoticeAdmin(admin.ModelAdmin):
         fields = super().get_fields(request, obj)
 
         # Customize field visibility based on the target_type value
-        if obj and obj.target_type == 'ALL':
-            fields.remove('department')
-            fields.remove('user')
-        elif obj and obj.target_type == 'DEPT':
-            fields.remove('user')
-        elif obj and obj.target_type == 'USER':
-            fields.remove('department')
+        # if obj and obj.target_type == 'ALL':
+        #     fields.remove('department')
+        #     fields.remove('user')
+        # elif obj and obj.target_type == 'DEPT':
+        #     fields.remove('user')
+        # elif obj and obj.target_type == 'USER':
+        #     fields.remove('department')
 
         return fields
     
@@ -464,3 +474,4 @@ class NoticeAdmin(admin.ModelAdmin):
                 obj.company = request.user.company
         
         super().save_model(request, obj, form, change)
+  

@@ -5,6 +5,16 @@ document.addEventListener('DOMContentLoaded', function() {
     var departmentField = document.querySelector('#id_department');  // Updated selector
     var userField = document.querySelector('#id_user');  // Updated selector
 
+    // Debugging to check if fields exist
+    console.log('Target Type Field:', targetTypeField);
+    console.log('Department Field:', departmentField);
+    console.log('User Field:', userField);
+
+    if (!targetTypeField || !departmentField || !userField) {
+        console.error('One or more fields are not found.');
+        return; // Exit if fields are missing
+    }
+
     function toggleFields() {
         var targetType = targetTypeField.value;
 

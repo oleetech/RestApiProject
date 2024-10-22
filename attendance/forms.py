@@ -24,5 +24,12 @@ class EmployeeForm(forms.ModelForm):
                 # If the user doesn't have a company, show an empty queryset
                 self.fields['user'].queryset = get_user_model().objects.none()
     
-    
-
+from .models import Notice    
+from ckeditor.widgets import CKEditorWidget
+class NoticeForm(forms.ModelForm):
+    class Meta:
+        model = Notice
+        fields = ['title', 'content', 'department', 'user', 'target_type']
+        widgets = {
+            'content': CKEditorWidget(),  # Use CKEditor 5 for content field
+        }

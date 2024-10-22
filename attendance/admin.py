@@ -390,6 +390,8 @@ class DepartmentAdmin(admin.ModelAdmin):
         if hasattr(request.user, 'company') and request.user.company:
             return qs.filter(company=request.user.company)
         return qs
+    
+from .forms import NoticeForm    
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
     list_display = ('title', 'get_departments', 'created_at')
@@ -397,7 +399,8 @@ class NoticeAdmin(admin.ModelAdmin):
     list_filter = ('department', 'created_at')
     # readonly_fields = ('created_at',)
     exclude = ('company','created_at', )
-    
+    form = NoticeForm  # Use the custom form
+
     class Media:
         js = ('attendance/js/custom_notice_admin.js',)
         

@@ -31,6 +31,7 @@ urlpatterns = [
     re_path(r'^auth/', include('social_django.urls', namespace='social')),  # Social Auth URL
     re_path(r'^docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),  # Swagger
     re_path('^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     
     path('authentication/', include('authentication.urls')),  
     path('auth-api/', include('authentication.api.urls')),

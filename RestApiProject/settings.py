@@ -50,8 +50,19 @@ INSTALLED_APPS = [
     'authentication', # My Authentication App
     'attendance', # Attendance App
     'django_extensions',  # Add this line
-
+    'ckeditor',
+    'ckeditor_uploader',  # For image uploads
 ]
+CKEDITOR_IMAGE_BACKEND = 'pillow'
+
+CKEDITOR_UPLOAD_PATH = "uploads/"  # Path for uploaded files
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'extraPlugins': 'image2',
+    },
+}
+
 
 AUTH_USER_MODEL = 'authentication.CustomUser'  # আপনার অ্যাপের নাম দিয়ে 'your_app_name' রিপ্লেস করুন 
 
@@ -195,7 +206,7 @@ DATABASES = {
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'djangotest',
+#         'NAME': 'django',
 #         'USER': 'root',
 #         'PASSWORD': '',
 #         'HOST':'localhost',

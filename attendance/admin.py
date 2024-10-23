@@ -108,10 +108,31 @@ class DeviceAdmin(admin.ModelAdmin):
     ordering = ('-last_sync_time',)  # Devices ordered by latest sync time
     list_editable = ('device_id','location', 'ip_address','port')  # Allow inline editing of location and IP address
     readonly_fields = ('last_sync_time',)  # Prevent editing of sync time
+    change_form_template = "device/change_form.html"
 
+    # Dynamically hide company field based on user role
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        return form
 
+    def get_fieldsets(self, request, obj=None):
+        """
+        Dynamically define fieldsets based on user permissions.
+        Superusers can see the company field, others cannot.
+        """
+        fieldsets = (
+            ("Device Information", {
+                'fields': ('device_id', 'location', 'company', 'ip_address', 'port',)  
+            }),
+        )
 
-    exclude = ('company',)  
+        # If the user is a superuser, show the company field
+        if request.user.is_superuser:
+            fieldsets[0][1]['fields'] += ('company',)  # Add company field to the first fieldset
+
+        return fieldsets
+
+ 
     def save_model(self, request, obj, form, change):
         if not obj.company:  
             if not request.user.company:
@@ -140,9 +161,9 @@ class AttendanceLogAdmin(admin.ModelAdmin):
     """
     Admin interface for AttendanceLog model.
     """
-    list_display = ('id', 'employee', 'company', 'punch_datetime', 'in_out_status', 'punch_mode', 'device', 'locationName')
+    list_display = ('id', 'employee', 'company', 'punch_time', 'in_out_status', 'punch_mode', 'device', 'locationName')
     search_fields = ('employee__name', 'company__name', 'device__device_id', 'in_out_status')
-    list_filter = ('company', 'in_out_status', 'punch_mode', 'punch_datetime')
+    list_filter = ('company', 'in_out_status', 'punch_mode', 'punch_time')
 
     exclude = ('company',)  
     def save_model(self, request, obj, form, change):
@@ -340,16 +361,37 @@ from .models import Holiday
 
 @admin.register(Holiday)
 class HolidayAdmin(admin.ModelAdmin):
-    """
-    Holiday মডেলের জন্য অ্যাডমিন ইন্টারফেস।
-    """
     list_display = ('company', 'date', 'reason')
     search_fields = ('company__name', 'reason')
     list_filter = ('company', 'date')
-    exclude = ('company',)  # Hide company field in the form
+
+    # Dynamically hide company field based on user role
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        return form
+
+    def get_fieldsets(self, request, obj=None):
+        """
+        Dynamically define fieldsets based on user permissions.
+        Superusers can see the company field, others cannot.
+        """
+        fieldsets = (
+            (None, {
+                'fields': ('date', 'reason')  
+            }),
+        )
+
+        # If the user is a superuser, show the company field
+        if request.user.is_superuser:
+            fieldsets[0][1]['fields'] += ('company',)  # Add company field to the first fieldset
+
+        return fieldsets
 
     def save_model(self, request, obj, form, change):
-        # Check if the object has a company
+        """
+        Save the Holiday model and assign the company based on user.
+        """
+        # If no company is set for the holiday, assign the current user's company
         if not obj.company:
             # Check if the user has a company
             if not hasattr(request.user, 'company') or not request.user.company:
@@ -360,11 +402,15 @@ class HolidayAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def get_queryset(self, request):
+        """
+        Customize the queryset based on the user's role.
+        Superusers see all records, regular users see only their company's holidays.
+        """
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs  # Show all holidays for superuser
-        return qs.filter(company=request.user.company) 
-    
+        return qs.filter(company=request.user.company)  # Filter by user's company
+
 from .models import Department, Notice
 
 @admin.register(Department)
@@ -449,14 +495,6 @@ class NoticeAdmin(admin.ModelAdmin):
         # Get the base fields
         fields = super().get_fields(request, obj)
 
-        # Customize field visibility based on the target_type value
-        # if obj and obj.target_type == 'ALL':
-        #     fields.remove('department')
-        #     fields.remove('user')
-        # elif obj and obj.target_type == 'DEPT':
-        #     fields.remove('user')
-        # elif obj and obj.target_type == 'USER':
-        #     fields.remove('department')
 
         return fields
     
@@ -474,4 +512,117 @@ class NoticeAdmin(admin.ModelAdmin):
                 obj.company = request.user.company
         
         super().save_model(request, obj, form, change)
-  
+
+
+from .models import LeaveRequest, LeaveBalance, LeaveType
+
+from .forms import LeaveRequestForm,LeaveTypeForm
+
+@admin.register(LeaveType)
+class LeaveTypeAdmin(admin.ModelAdmin):
+    form = LeaveTypeForm
+
+    list_display = ('name', 'description', 'company')
+    search_fields = ('name', 'description')
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+
+        # Create a custom form class to include request
+        class RequestForm(form):
+            def __init__(self, *args, **inner_kwargs):
+                inner_kwargs['request'] = request  # Pass the request to the form
+                super().__init__(*args, **inner_kwargs)
+
+        return RequestForm  # Return the custom form class
+
+    def get_fieldsets(self, request, obj=None):
+        """
+        Dynamically define fieldsets based on user permissions.
+        Superusers can see the company field, others cannot.
+        """
+        fieldsets = (
+            ("Leave Type Information", {
+                'fields': ('name', 'description',)  # Exclude 'company' initially
+            }),
+        )
+
+        # If the user is a superuser, show the company field
+        if request.user.is_superuser:
+            fieldsets[0][1]['fields'] += ('company',)  # Add company field to the first fieldset
+
+        return fieldsets
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs  # Superusers see all
+        return qs.filter(company=request.user.company)  # Filter based on the user's company
+    def save_model(self, request, obj, form, change):
+        # Check if the user is not a superuser
+        if not request.user.is_superuser:
+            # Check if the department object has a company
+            if not obj.company_id:
+                # Check if the user has a company
+                if not hasattr(request.user, 'company') or not request.user.company:
+                    form.add_error(None, "আপনার ইউজার প্রোফাইলে কোম্পানি সেট করা নেই। অনুগ্রহ করে কোম্পানি সিলেক্ট করুন।")
+                    raise ValidationError("User profile must have an associated company.")
+                
+                # Assign the user's company to the department
+                obj.company = request.user.company
+        
+        super().save_model(request, obj, form, change)
+@admin.register(LeaveBalance)
+class LeaveBalanceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'leave_type', 'total_leaves', 'used_leaves', 'remaining_leaves')
+    search_fields = ('user__username', 'leave_type__name')
+
+@admin.register(LeaveRequest)
+class LeaveRequestAdmin(admin.ModelAdmin):
+    form = LeaveRequestForm
+
+    list_display = ('user', 'leave_type', 'start_date', 'end_date',)
+    search_fields = ('user__username', 'leave_type__name')
+    list_filter = ('leave_type', 'company')
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+
+        # Create a custom form class to include request
+        class RequestForm(form):
+            def __init__(self, *args, **inner_kwargs):
+                inner_kwargs['request'] = request  # Pass the request to the form
+                super().__init__(*args, **inner_kwargs)
+
+        return RequestForm  # Return the custom form class
+
+    def get_fieldsets(self, request, obj=None):
+        """
+        Dynamically define fieldsets based on user permissions.
+        Superusers can see the company field, others cannot.
+        """
+        fieldsets = (
+            ("Leave Request", {
+                'fields': ('user', 'leave_type', 'start_date', 'end_date', ) 
+            }),
+        )
+
+        # If the user is a superuser, show the company field
+        if request.user.is_superuser:
+            fieldsets[0][1]['fields'] += ('company',)  # Add company field to the first fieldset
+        # Check if the user is superuser or has permission to approve department leaves
+        if request.user.is_superuser or request.user.has_perm('attendance.can_approve_department_leave'):
+            # Add department_approved field if user is superuser or has the permission
+            fieldsets[0][1]['fields'] += ('department_approved',)
+
+        # Check if the user is superuser or has permission to approve HR leaves
+        if request.user.is_superuser or request.user.has_perm('attendance.can_approve_hr_leave'):
+            # Add hr_approved field if user is superuser or has the permission
+            fieldsets[0][1]['fields'] += ('hr_approved',)            
+        return fieldsets
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(company=request.user.company)

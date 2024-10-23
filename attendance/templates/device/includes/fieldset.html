@@ -1,0 +1,51 @@
+<fieldset class="module aligned {{ fieldset.classes }}">
+    {% if fieldset.name %}
+        <h5 class="title">{{ fieldset.name }}</h5>
+    {% endif %}
+    {% if fieldset.description %}
+        <div class="description">{{ fieldset.description|safe }}</div>
+    {% endif %}
+
+    <div class="row">  <!-- Start the row here -->
+        {% for line in fieldset %}
+            {% for field in line %}
+                {# Set the column size dynamically based on the fieldset's col_size #}
+                <div class="col-md-{{ fieldset.col_size|default:'6' }}">  <!-- Dynamically set the width -->
+                    <div class="form-group mb-2 {% if field.errors %} errors{% endif %} {% if not field.is_readonly and not line.has_visible_field %} hidden{% endif %}">
+                        {% if field.errors %}
+                            <div class="invalid-feedback d-block">{{ field.errors }}</div>  <!-- Show errors for each field -->
+                        {% endif %}
+                        
+                        {{ field.label_tag }}  <!-- Render the label for the field -->
+
+                        {% if field.is_checkbox %}
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    {{ field.field }}
+                                    <span class="form-check-sign"><span class="check"></span></span>
+                                </label>
+                            </div>
+                        {% else %}
+                            {% if field.is_readonly %}
+                                <div class="readonly">{{ field.contents }}</div>  <!-- Display read-only content -->
+                            {% else %}
+                                {{ field.field }}  <!-- Render the input field -->
+                            {% endif %}
+                        {% endif %}
+
+                        {% if field.field.help_text %}
+                            <div class="help">{{ field.field.help_text|safe }}</div>  <!-- Help text for the field -->
+                        {% endif %}
+                    </div>
+                </div> <!-- End of column for each field -->
+                
+                {# Add a separator line after the first column if there are two columns #}
+                {% if forloop.counter|divisibleby:2 and not forloop.last %}
+                    <div class="col-md-12 text-center">
+                        <hr class="separator-line">  <!-- Separator line -->
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div> <!-- End the row after all fields -->
+</fieldset>

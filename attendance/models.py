@@ -268,14 +268,11 @@ class Device(models.Model):
         
 class AttendanceLog(models.Model):
     
-    """
-    ব্যবহারকারীর চেক ইন এবং চেক আউট তথ্য সংরক্ষণ করার জন্য উপস্থিতি লগ মডেল।
-    """
     
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE,null=True, blank=True,default=None)  
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='attendance_logs',null=True)
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
-    punch_datetime = models.DateTimeField(default=timezone.now, verbose_name=_("Date & Time of Punch"))
+    punch_time = models.DateTimeField(default=timezone.now, verbose_name=_("Date & Time of Punch"))
    
     STATUS_CHOICES = [
         ('IN', 'Check-In'),
@@ -326,9 +323,9 @@ class AttendanceLog(models.Model):
     class Meta:
         verbose_name = "Attendance Log"
         verbose_name_plural = "Attendance Logs"
-        ordering = ['-punch_datetime']  # Order by latest timestamp first
+        ordering = ['-punch_time']  # Order by latest timestamp first
         constraints = [
-            models.UniqueConstraint(fields=['employee', 'punch_datetime'], name='unique_attendance_log_per_user_per_day_per_checkin')
+            models.UniqueConstraint(fields=['employee', 'punch_time'], name='unique_attendance_log_per_user_per_day_per_checkin')
         ]
 
     def clean(self):
@@ -502,3 +499,71 @@ class Notice(models.Model):
 
 
 
+class LeaveType(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        unique_together = ('company', 'name')
+
+class LeaveBalance(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
+    total_leaves = models.PositiveIntegerField(default=0)
+    used_leaves = models.PositiveIntegerField(default=0)
+    remaining_leaves = models.PositiveIntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        self.remaining_leaves = self.total_leaves - self.used_leaves
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.leave_type.name}"
+
+    class Meta:
+        unique_together = ('user', 'leave_type')
+
+class LeaveRequest(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    # New field to indicate department approval status
+    department_approved = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pending'), ('approved', 'Approved')],
+        default='pending'
+    )
+    department_approved_by = models.ForeignKey(
+        get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, related_name='department_approved_requests'
+    )
+    department_approval_date = models.DateTimeField(null=True, blank=True)
+
+    # New field to indicate HR approval status
+    hr_approved = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pending'), ('approved', 'Approved')],
+        default='pending'
+    )
+    hr_approved_by = models.ForeignKey(
+        get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, related_name='hr_approved_requests'
+    )
+    hr_approval_date = models.DateTimeField(null=True, blank=True)
+    
+    comments = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.leave_type.name} ({self.status})"
+
+    class Meta:
+        permissions = [
+            ('can_approve_department_leave', 'Can approve department leave'),
+            ('can_approve_hr_leave', 'Can approve HR leave'),
+        ]

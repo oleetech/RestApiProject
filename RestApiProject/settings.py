@@ -145,10 +145,11 @@ CKEDITOR_5_CONFIGS = {
 AUTH_USER_MODEL = 'authentication.CustomUser'  # আপনার অ্যাপের নাম দিয়ে 'your_app_name' রিপ্লেস করুন 
 
 LANGUAGE_CODE = 'en-us'  # Default language
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
+USE_TZ = True
+
 USE_I18N = True  # Enable internationalization (i18n)
 USE_L10N = True  # Enable localization (l10n)
-USE_TZ = True
 
 LANGUAGES = [
     ('en', 'English'),

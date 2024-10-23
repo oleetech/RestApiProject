@@ -40,8 +40,8 @@ def give_attendance_view(request):
                 longitude=longitude,
                 locationName=location_name,
                 company=company,
-                verification_method='GPS'
-                # Add other fields as necessary
+                verification_method='GPS',
+                punch_time = timezone.localtime()
             )
             # Redirect or return a response as needed
             return redirect('index')  # Change this to your desired redirect

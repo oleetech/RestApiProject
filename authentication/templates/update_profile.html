@@ -97,5 +97,19 @@
             message.style.display = 'none';
         });
     }, 5000); // 5000 ms = 5 seconds
+
+    // Clear Django messages immediately after they are shown
+    window.onload = function() {
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'clear_messages': true
+            })
+        });
+    };
 </script>
 {% endblock scripts %}

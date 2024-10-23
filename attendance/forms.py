@@ -42,3 +42,80 @@ class NoticeForm(forms.ModelForm):
         widgets = {
             'content': CKEditor5Widget(config_name='default'), 
         }
+
+from .models import LeaveRequest    
+class LeaveRequestForm(forms.ModelForm):
+    class Meta:
+        model = LeaveRequest
+        fields = '__all__'  # LeaveRequest মডেলের সব ফিল্ড ব্যবহার করা হবে
+
+    def __init__(self, *args, **kwargs):
+        # Request অবজেক্ট গ্রহণ করা
+        self.request = kwargs.pop('request', None)
+        # সুপার ক্লাসের __init__ পদ্ধতি কল করা
+        super().__init__(*args, **kwargs)
+
+        # প্রমাণীকৃত ব্যবহারকারী কিনা তা যাচাই করা
+        if self.request and self.request.user.is_authenticated:
+            # চেক করুন ব্যবহারকারী সুপার ইউজার নয় কিনা
+            if not self.request.user.is_superuser:
+                # Non-superuser এর জন্য company ফিল্ড সরিয়ে ফেলুন
+                self.fields.pop('company', None)
+
+            # Superuser হলে, সমস্ত ব্যবহারকারী দেখান
+            if self.request.user.is_superuser:
+                self.fields['user'].queryset = get_user_model().objects.all()
+            else:
+                # Non-superuser হলে শুধু একই কোম্পানির ব্যবহারকারী দেখান
+                company = self.request.user.company
+                if company:
+                    # একই কোম্পানির ব্যবহারকারীদের দেখান
+                    self.fields['user'].queryset = get_user_model().objects.filter(company=company)
+                else:
+                    # যদি কোম্পানি না থাকে, তাহলে খালি queryset দেখান
+                    self.fields['user'].queryset = get_user_model().objects.none()
+
+            # LeaveType এর queryset নির্ধারণ
+            if self.request.user.is_superuser:
+                # যদি ব্যবহারকারী সুপারইউজার হয়, তবে সমস্ত LeaveType দেখান
+                self.fields['leave_type'].queryset = LeaveType.objects.all()
+            else:
+                # Non-superuser হলে শুধু একই কোম্পানির LeaveType দেখান
+                company = self.request.user.company
+                if company:
+                    # একই কোম্পানির LeaveType দেখান
+                    self.fields['leave_type'].queryset = LeaveType.objects.filter(company=company)
+                else:
+                    # যদি কোম্পানি না থাকে, তবে খালি queryset দেখান
+                    self.fields['leave_type'].queryset = LeaveType.objects.none()
+
+            # Check if the user has permission to approve department leaves
+            if not self.request.user.has_perm('attendance.can_approve_department_leave') and not self.request.user.is_superuser:
+                # If user does not have permission and is not a superuser, hide the department_approved field
+                self.fields.pop('department_approved', None)
+
+            # Check if the user has permission to approve HR leaves
+            if not self.request.user.has_perm('attendance.can_approve_hr_leave') and not self.request.user.is_superuser:
+                # If user does not have permission and is not a superuser, hide the hr_approved field
+                self.fields.pop('hr_approved', None)                
+
+from .models import LeaveType    
+
+class LeaveTypeForm(forms.ModelForm):
+    class Meta:
+        model = LeaveType
+        fields = '__all__'  # LeaveType মডেলের সব ফিল্ড ব্যবহার করা হবে
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+
+        # Check if the request is authenticated
+        if self.request and self.request.user.is_authenticated:
+            # Check if the request user is not a superuser
+            if not self.request.user.is_superuser:
+                # Non-superuser এর জন্য company ফিল্টার করা
+                self.fields.pop('company', None)  # Remove company field for non-superusers
+
+
+                

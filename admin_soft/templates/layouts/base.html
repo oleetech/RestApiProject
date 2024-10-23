@@ -14,10 +14,10 @@
       {% if request.user.company %}
           {{ request.user.company.name }}
       {% else %}
-          Soft UI Dashboard
+          Unmukto
       {% endif %}
   {% else %}
-      Soft UI Dashboard
+      Unmukto
   {% endif %}
 
 
@@ -51,11 +51,19 @@
 
 <body class="g-sidenav-show bg-gray-100">
 
+    {% if user.is_authenticated %}
     {% include "includes/sidebar.html" %}
-    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
-        {% include "includes/navigation.html" %} 
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+        {% include "includes/navigation.html" %}
         {% block content %}{% endblock content %}
     </main>
+{% else %}
+    <!-- Show a specific message if the user is not logged in -->
+        <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+            {% include "includes/navigation.html" %}
+            You must be logged in to view this content.
+
+{% endif %}
 
     <!-- APP Configurator -->
     {% include "includes/fixed-plugin.html" %} 

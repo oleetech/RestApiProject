@@ -90,3 +90,18 @@ def neg_num(value, number):
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
+
+@register.filter(name='attr')
+def add_attr(field, css):
+    """
+    Add attributes to form fields, such as class or placeholder.
+    Example: {{ form.field|attr:"class:form-control" }}
+    """
+    # Check if the field is an instance of BoundField
+    if hasattr(field, 'field'):
+        attrs = field.field.widget.attrs  # Get existing attributes
+        definition = css.split(':', 1)  # Split the CSS string into key and value
+        if len(definition) == 2:
+            key, value = definition
+            attrs[key] = value  # Set the attribute
+    return field

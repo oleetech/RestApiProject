@@ -1,4 +1,6 @@
+
 {% extends "layouts/base.html" %}
+
 {% load i18n admin_urls static admin_modify %}
 
 {% block extrahead %}
@@ -48,7 +50,7 @@
 
     <div class="container-fluid">
         <div class="row">
-            <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}"
+            <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" class="d-flex flex-row align-items-center flex-wrap"
                   method="post" id="{{ opts.model_name }}_form" novalidate class="row">
                 {% csrf_token %}
 

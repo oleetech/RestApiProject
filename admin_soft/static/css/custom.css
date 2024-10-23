@@ -31,3 +31,13 @@
 .nav-item.active a {
     color: #0056b3; /* Darker text color for active link */
 }
+
+
+.navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link, .navbar-vertical .navbar-nav .nav-item .collapsing .nav .nav-item .nav-link {
+    position: inherit !important;
+}
+
+.nav-link:hover{
+    color: #007bff; /* Change text color on hover */
+
+}

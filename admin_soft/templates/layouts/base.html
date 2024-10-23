@@ -39,6 +39,8 @@
     <link href="{% static 'css/nucleo-svg.css' %}" rel="stylesheet" />
     <!-- CSS Files -->
     <link id="pagestyle" href="{% static 'css/soft-ui-dashboard.css' %}" rel="stylesheet" />
+    <!-- <link id="pagestyle" href="{% static 'css/another.css' %}" rel="stylesheet" /> -->
+
     <link id="pagestyle" href="{% static 'css/widgets.css' %}" rel="stylesheet" />
     <link id="pagestyle" href="{% static 'css/custom.css' %}" rel="stylesheet" />
 
@@ -52,18 +54,27 @@
 <body class="g-sidenav-show bg-gray-100">
 
     {% if user.is_authenticated %}
+    <!-- Show this block if the user is logged in -->
     {% include "includes/sidebar.html" %}
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+        <!-- Navigation for logged-in users -->
         {% include "includes/navigation.html" %}
-        {% block content %}{% endblock content %}
     </main>
 {% else %}
-    <!-- Show a specific message if the user is not logged in -->
-        <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
-            {% include "includes/navigation.html" %}
-            You must be logged in to view this content.
-
+    <!-- Show this block if the user is not logged in -->
+    <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+        <!-- Navigation for guests or not logged-in users -->
+        {% include "includes/navigation_guest.html" %}
+    </main>
 {% endif %}
+
+<!-- Only one block for content -->
+<main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
+    {% block content %}{% endblock content %}
+</main>
+
+
+
 
     <!-- APP Configurator -->
     {% include "includes/fixed-plugin.html" %} 
@@ -91,6 +102,8 @@
 
 <script src="{% static 'js/font-awesome-42d5adcbca.js' %}"></script>
 <script src="{% static 'js/soft-ui-dashboard.min.js' %}"></script>
+<!-- <script src="{% static 'js/main.6a2d3bb9.js' %}"></script> -->
+
 
 <script src="{% static 'js/scripts.js' %}"></script>
 

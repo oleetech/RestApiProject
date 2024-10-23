@@ -16,7 +16,7 @@
                             <div class="invalid-feedback d-block">{{ field.errors }}</div>  <!-- Show errors for each field -->
                         {% endif %}
                         
-                        {{ field.label_tag }}  <!-- Render the label for the field -->
+                        {{ field.label_tag }}  
 
                         {% if field.is_checkbox %}
                             <div class="form-check">
@@ -27,17 +27,17 @@
                             </div>
                         {% else %}
                             {% if field.is_readonly %}
-                                <div class="readonly">{{ field.contents }}</div>  <!-- Display read-only content -->
+                                <div class="readonly">{{ field.contents }}</div>  
                             {% else %}
-                                {{ field.field }}  <!-- Render the input field -->
+                                {{ field.field }}  
                             {% endif %}
                         {% endif %}
 
                         {% if field.field.help_text %}
-                            <div class="help">{{ field.field.help_text|safe }}</div>  <!-- Help text for the field -->
+                            <div class="help">{{ field.field.help_text|safe }}</div>
                         {% endif %}
                     </div>
-                </div> <!-- End of column for each field -->
+                </div> 
                 
                 {# Add a separator line after the first column if there are two columns #}
                 {% if forloop.counter|divisibleby:2 and not forloop.last %}

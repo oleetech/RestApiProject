@@ -7,7 +7,6 @@ from django.contrib.auth import logout
 
 # Pages
 def index(request):
-
   return render(request, 'pages/index.html', { 'segment': 'index' })
 
 def billing(request):

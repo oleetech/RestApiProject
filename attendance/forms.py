@@ -118,4 +118,36 @@ class LeaveTypeForm(forms.ModelForm):
                 self.fields.pop('company', None)  # Remove company field for non-superusers
 
 
-                
+
+from .models import LeaveBalance
+
+class LeaveBalanceForm(forms.ModelForm):
+    class Meta:
+        model = LeaveBalance
+        fields = '__all__'  # Ensure all fields are included in the form
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)  # Extract the request object
+        super().__init__(*args, **kwargs)
+
+        # Filter the user field based on the request user's company or superuser status
+        if self.request and self.request.user.is_authenticated:
+            if self.request.user.is_superuser:
+                # Superusers can see all users
+                self.fields['user'].queryset = get_user_model().objects.all()
+            else:
+                # For non-superusers, filter users by the company
+                company = getattr(self.request.user, 'company', None)
+                if company:
+                    # Only show users from the same company
+                    self.fields['user'].queryset = get_user_model().objects.filter(company=company)
+                else:
+                    # Show empty queryset if no company is associated with the user
+                    self.fields['user'].queryset = get_user_model().objects.none()
+
+        # প্রমাণীকৃত ব্যবহারকারী কিনা তা যাচাই করা
+        if self.request and self.request.user.is_authenticated:
+            # চেক করুন ব্যবহারকারী সুপার ইউজার নয় কিনা
+            if not self.request.user.is_superuser:
+                # Non-superuser এর জন্য company ফিল্ড সরিয়ে ফেলুন
+                self.fields.pop('company', None)

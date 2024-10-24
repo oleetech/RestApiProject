@@ -512,6 +512,7 @@ class LeaveType(models.Model):
 
 class LeaveBalance(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)    
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     total_leaves = models.PositiveIntegerField(default=0)
     used_leaves = models.PositiveIntegerField(default=0)

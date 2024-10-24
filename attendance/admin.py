@@ -572,10 +572,49 @@ class LeaveTypeAdmin(admin.ModelAdmin):
                 obj.company = request.user.company
         
         super().save_model(request, obj, form, change)
+from .forms import LeaveBalanceForm
 @admin.register(LeaveBalance)
 class LeaveBalanceAdmin(admin.ModelAdmin):
+    form = LeaveBalanceForm
     list_display = ('user', 'leave_type', 'total_leaves', 'used_leaves', 'remaining_leaves')
     search_fields = ('user__username', 'leave_type__name')
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+
+        # Create a custom form class to include request
+        class RequestForm(form):
+            def __init__(self, *args, **inner_kwargs):
+                inner_kwargs['request'] = request  # Pass the request object to the form
+                super().__init__(*args, **inner_kwargs)
+
+        return RequestForm
+    def get_fieldsets(self, request, obj=None):
+        """
+        Dynamically define fieldsets based on user permissions.
+        Superusers can see the company field, others cannot.
+        """
+        # Define the initial fieldset excluding 'company'
+        fieldsets = (
+            ("Leave Balance Information", {
+                'fields': ('leave_type', 'total_leaves', 'used_leaves', 'remaining_leaves')  # Exclude 'company'
+            }),
+            ("User Information", {
+                'fields': ('user',)  # Show only 'user'
+            }),
+        )
+
+        # If the user is a superuser, add the 'company' field
+        if request.user.is_superuser:
+            fieldsets[1][1]['fields'] += ('company',)  # Add 'company' to the 'User Information' fieldset
+
+        return fieldsets
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs  # Superusers can see all records
+        return qs.filter(user__company=request.user.company)  # Filter by the user's company
 
 @admin.register(LeaveRequest)
 class LeaveRequestAdmin(admin.ModelAdmin):

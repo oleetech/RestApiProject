@@ -6,6 +6,7 @@ from .models import Company
 CustomUser = get_user_model()
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext_lazy as _
+from django.core.cache import cache
 
 class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
@@ -67,7 +68,32 @@ class CompanyAdmin(admin.ModelAdmin):
 
         
 
+    # Override save_model to cache the saved Company object
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Invalidate the cache when a company is added or updated
+        cache.delete('all_companies')
 
+    # Override delete_model to invalidate cache when a company is deleted
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        # Invalidate the cache when a company is deleted
+        cache.delete('all_companies')
+
+    # Override get_queryset to cache the list of all Company objects
+    def get_queryset(self, request):
+        companies = cache.get('all_companies')
+        if companies:
+            # Print that the data is fetched from Redis
+            # print("Companies loaded from Redis cache.")
+            pass
+        else:
+            # Print that the data is fetched from the database
+            # print("Companies loaded from the database.")
+            companies = super().get_queryset(request)
+            cache.set('all_companies', companies, timeout=600)
+        return companies
+    
 # Register the Company model with the admin site
 admin.site.register(Company, CompanyAdmin)
 

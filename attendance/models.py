@@ -568,3 +568,26 @@ class LeaveRequest(models.Model):
             ('can_approve_department_leave', 'Can approve department leave'),
             ('can_approve_hr_leave', 'Can approve HR leave'),
         ]
+        
+    def save(self, *args, **kwargs):
+        # Calculate the number of leave days
+        leave_days = (self.end_date - self.start_date).days + 1  # +1 to include the last day
+
+        # Check if the HR approval is 'approved'
+        if self.hr_approved == 'approved':
+            # Find the LeaveBalance for the user and leave_type
+            try:
+                leave_balance = LeaveBalance.objects.get(user=self.user, leave_type=self.leave_type)
+                # Deduct the leave days from remaining_leaves
+                leave_balance.used_leaves += leave_days
+                leave_balance.remaining_leaves = leave_balance.total_leaves - leave_balance.used_leaves
+                leave_balance.save()
+            except LeaveBalance.DoesNotExist:
+                # Handle if no LeaveBalance is found
+                pass
+
+            # Set the HR approval date to the current time if it's approved
+            if not self.hr_approval_date:
+                self.hr_approval_date = timezone.now()
+
+        super().save(*args, **kwargs)  # Call the original save method        

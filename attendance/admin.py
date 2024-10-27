@@ -543,7 +543,7 @@ class LeaveTypeAdmin(admin.ModelAdmin):
         """
         fieldsets = (
             ("Leave Type Information", {
-                'fields': ('name', 'description',)  # Exclude 'company' initially
+                'fields': ('name', 'description','max_leaves','is_active')  # Exclude 'company' initially
             }),
         )
 
@@ -615,6 +615,8 @@ class LeaveBalanceAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs  # Superusers can see all records
         return qs.filter(user__company=request.user.company)  # Filter by the user's company
+    
+
 
 @admin.register(LeaveRequest)
 class LeaveRequestAdmin(admin.ModelAdmin):

@@ -43,7 +43,9 @@ class NoticeForm(forms.ModelForm):
             'content': CKEditor5Widget(config_name='default'), 
         }
 
-from .models import LeaveRequest    
+
+from .models import LeaveRequest
+
 class LeaveRequestForm(forms.ModelForm):
     class Meta:
         model = LeaveRequest
@@ -57,10 +59,10 @@ class LeaveRequestForm(forms.ModelForm):
 
         # প্রমাণীকৃত ব্যবহারকারী কিনা তা যাচাই করা
         if self.request and self.request.user.is_authenticated:
-            # চেক করুন ব্যবহারকারী সুপার ইউজার নয় কিনা
-            if not self.request.user.is_superuser:
-                # Non-superuser এর জন্য company ফিল্ড সরিয়ে ফেলুন
-                self.fields.pop('company', None)
+            # Check if user is not a superuser or not staff
+            if not self.request.user.is_superuser and not self.request.user.is_staff:
+                # Hide the user field for non-superusers and non-staff users
+                self.fields.pop('user', None)
 
             # Superuser হলে, সমস্ত ব্যবহারকারী দেখান
             if self.request.user.is_superuser:
@@ -97,7 +99,8 @@ class LeaveRequestForm(forms.ModelForm):
             # Check if the user has permission to approve HR leaves
             if not self.request.user.has_perm('attendance.can_approve_hr_leave') and not self.request.user.is_superuser:
                 # If user does not have permission and is not a superuser, hide the hr_approved field
-                self.fields.pop('hr_approved', None)                
+                self.fields.pop('hr_approved', None)
+            
 
 from .models import LeaveType    
 

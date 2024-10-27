@@ -503,7 +503,8 @@ class LeaveType(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-
+    max_leaves = models.PositiveIntegerField(default=0)  # Maximum allowable leaves of this type
+    is_active = models.BooleanField(default=True)  # Toggle active/inactive types
     def __str__(self):
         return self.name
 
